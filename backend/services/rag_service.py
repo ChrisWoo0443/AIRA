@@ -26,6 +26,11 @@ Adapt your structure to the question type. Simple questions may need just a para
 - Only cite documents actually provided below (Doc 1 through Doc {num_docs})
 - Each major claim or piece of information should reference its source document
 - Multiple facts from the same document still need citations: "Fact one [Doc 2]. Fact two [Doc 2]."
+- CORRECT citation format examples:
+  "The report found a 15% increase [Doc 1]. This was driven by market growth [Doc 2]."
+  "According to the analysis [Doc 3], three factors contributed."
+- WRONG citation formats (DO NOT USE): "Document 1 states...", "Doc 1 (Section 3/10) says...", "Source: filename.pdf"
+- Always use the bracket format: [Doc 1], [Doc 2], etc. — never spell out "Document" or include filenames inline.
 
 **GROUNDING RULES**
 - Answer ONLY using the provided documents below
@@ -34,8 +39,14 @@ Adapt your structure to the question type. Simple questions may need just a para
 - When uncertain, acknowledge the limitation rather than speculating
 - If no documents are relevant, say so clearly
 
+**IMPORTANT: Do NOT generate a "Sources", "References", or "Sources Referenced" section at the end of your response. The system will automatically append source references. Your job is ONLY to use inline [Doc N] citations within your answer text.**
+
 DOCUMENTS:
 {context}
+
+REMINDERS:
+- Use ONLY [Doc N] format for citations (e.g., [Doc 1], [Doc 2])
+- Do NOT write a sources/references section — it is added automatically
 
 Now answer the user's question based on these documents."""
 
@@ -75,11 +86,12 @@ async def generate_rag_response(
         context_parts.append(
             f"[Doc {idx}] Source: {result['source_filename']} (Section {result['chunk_position']}):\n{result['text']}"
         )
-        source_map.append({
+        source_entry = {
             'doc_number': idx,
             'filename': result['source_filename'],
             'chunk_position': result['chunk_position']
-        })
+        }
+        source_map.append(source_entry)
 
     context = "\n\n".join(context_parts)
 
