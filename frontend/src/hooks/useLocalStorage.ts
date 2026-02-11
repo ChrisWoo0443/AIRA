@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 /**
  * Type-safe localStorage hook with error handling.
@@ -25,35 +25,33 @@ export function useLocalStorage<T>(
     }
   });
 
-  // Update both React state and localStorage synchronously
+  // Sync React state to localStorage after every state change
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(key, JSON.stringify(storedValue));
+    } catch (error) {
+      // Handle QuotaExceededError (DOMException with code 22)
+      if (
+        error instanceof DOMException &&
+        (error.code === 22 || error.name === 'QuotaExceededError')
+      ) {
+        console.warn(`localStorage quota exceeded for key "${key}". State updated but not persisted.`);
+      } else {
+        console.error(`Error writing localStorage key "${key}":`, error);
+      }
+    }
+  }, [key, storedValue]);
+
+  // Update React state - functional updates flow through React's state queue
   const setValue = useCallback(
     (value: T | ((val: T) => T)) => {
       try {
-        // Allow value to be a function (similar to useState)
-        const valueToStore = value instanceof Function ? value(storedValue) : value;
-
-        // Update React state
-        setStoredValue(valueToStore);
-
-        // Write to localStorage synchronously (avoids race conditions)
-        try {
-          window.localStorage.setItem(key, JSON.stringify(valueToStore));
-        } catch (storageError) {
-          // Handle QuotaExceededError (DOMException with code 22)
-          if (
-            storageError instanceof DOMException &&
-            (storageError.code === 22 || storageError.name === 'QuotaExceededError')
-          ) {
-            console.warn(`localStorage quota exceeded for key "${key}". State updated but not persisted.`);
-          } else {
-            throw storageError;
-          }
-        }
+        setStoredValue(value);
       } catch (error) {
         console.error(`Error setting localStorage key "${key}":`, error);
       }
     },
-    [key, storedValue]
+    [key]
   );
 
   // Remove from localStorage and reset to initial value
