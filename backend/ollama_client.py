@@ -5,7 +5,7 @@ Provides functions to check Ollama service status and test completions.
 """
 
 import ollama
-from typing import Dict, Any, List
+from typing import Dict, Any, List, AsyncGenerator
 
 
 def check_ollama_status() -> Dict[str, Any]:
@@ -78,3 +78,46 @@ def test_completion(model: str = "llama3:8b") -> Dict[str, Any]:
             "model": model,
             "error": str(e)
         }
+
+
+async def stream_chat_completion(
+    messages: List[Dict[str, str]],
+    model: str = "llama3:8b"
+) -> AsyncGenerator[str, None]:
+    """
+    Stream chat completion from Ollama.
+
+    Args:
+        messages: List of message dicts with 'role' and 'content' keys
+        model: Model name to use (default: llama3:8b)
+
+    Yields:
+        str: Content chunks from the streaming response
+
+    Raises:
+        Exception: If Ollama request fails
+    """
+    client = ollama.AsyncClient()
+
+    try:
+        stream = await client.chat(
+            model=model,
+            messages=messages,
+            stream=True
+        )
+
+        async for chunk in stream:
+            # Extract content from chunk
+            if isinstance(chunk, dict):
+                content = chunk.get('message', {}).get('content', '')
+            else:
+                # Handle object-style response
+                content = getattr(chunk.get('message', {}), 'content', '') if hasattr(chunk, 'get') else ''
+                if not content and hasattr(chunk, 'message'):
+                    content = getattr(chunk.message, 'content', '')
+
+            if content:
+                yield content
+
+    except Exception as e:
+        raise Exception(f"Ollama streaming error: {str(e)}") from e
