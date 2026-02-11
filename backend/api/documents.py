@@ -1,5 +1,6 @@
 import uuid
 import os
+import logging
 from pathlib import Path
 from fastapi import APIRouter, UploadFile, HTTPException
 import aiofiles
@@ -13,6 +14,12 @@ from services.document_service import (
     delete_document,
     UPLOAD_DIR
 )
+from services.chunking_service import chunk_document
+from services.embedding_service import generate_embeddings
+from services.vector_service import add_chunks, delete_document_vectors
+
+# Setup logging
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -83,11 +90,26 @@ async def upload_document(file: UploadFile):
         extraction_status=extraction_status
     )
 
+    # Trigger ingestion pipeline if extraction succeeded
+    indexing_status = "pending"
+    if extraction_status == "success" and text_content:
+        try:
+            # Chunk, embed, and store in vector DB
+            chunks = chunk_document(text_content)
+            embeddings = generate_embeddings(chunks)
+            add_chunks(doc_id, file.filename, chunks, embeddings)
+            indexing_status = "indexed"
+        except Exception as e:
+            # Log error but don't fail upload - graceful degradation
+            logger.warning(f"Indexing failed for doc {doc_id}: {str(e)}")
+            indexing_status = "pending"
+
     return UploadResponse(
         id=doc_metadata["id"],
         filename=doc_metadata["filename"],
         size=doc_metadata["size"],
-        upload_date=doc_metadata["upload_date"]
+        upload_date=doc_metadata["upload_date"],
+        indexing_status=indexing_status
     )
 
 
@@ -113,6 +135,13 @@ async def get_documents():
 @router.delete("/documents/{doc_id}")
 async def delete_document_endpoint(doc_id: str):
     """Delete a document by ID"""
+    # Clean up vectors first
+    try:
+        delete_document_vectors(doc_id)
+    except Exception as e:
+        # Log warning but proceed with document deletion
+        logger.warning(f"Vector cleanup failed for doc {doc_id}: {str(e)}")
+
     deleted = await delete_document(doc_id)
 
     if not deleted:

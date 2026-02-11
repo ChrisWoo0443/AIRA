@@ -31,11 +31,14 @@ def generate_embeddings(texts: list[str]) -> list[list[float]]:
         # Extract embeddings from response
         embeddings = response['embeddings']
 
-        # Validate first embedding has correct dimensions (nomic-embed-text = 1024)
-        if embeddings and len(embeddings[0]) != 1024:
-            raise ValueError(
-                f"Expected 1024 dimensions, got {len(embeddings[0])}"
-            )
+        # Validate first embedding has expected dimensions
+        # (nomic-embed-text typically returns 768 or 1024 depending on version)
+        if embeddings:
+            dims = len(embeddings[0])
+            if dims not in [768, 1024]:
+                raise ValueError(
+                    f"Unexpected embedding dimensions: {dims} (expected 768 or 1024)"
+                )
 
         return embeddings
 

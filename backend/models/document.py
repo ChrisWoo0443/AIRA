@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Literal
+from typing import Literal, Optional
 
 
 class DocumentMetadata(BaseModel):
@@ -27,3 +27,4 @@ class UploadResponse(BaseModel):
     filename: str
     size: int
     upload_date: str
+    indexing_status: Optional[str] = None
