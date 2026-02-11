@@ -9,6 +9,59 @@ interface MessageListProps {
   isLoading: boolean;
 }
 
+// Shared markdown component configuration
+const markdownComponents = {
+  h2: ({ ...props }) => (
+    <h2 style={{ fontSize: '18px', fontWeight: 'bold', marginTop: '16px', marginBottom: '8px' }} {...props} />
+  ),
+  h3: ({ ...props }) => (
+    <h3 style={{ fontSize: '16px', fontWeight: 'bold', marginTop: '12px', marginBottom: '6px' }} {...props} />
+  ),
+  p: ({ ...props }) => (
+    <p style={{ marginBottom: '8px', lineHeight: '1.6' }} {...props} />
+  ),
+  ul: ({ ...props }) => (
+    <ul style={{ marginLeft: '20px', marginBottom: '8px' }} {...props} />
+  ),
+  ol: ({ ...props }) => (
+    <ol style={{ marginLeft: '20px', marginBottom: '8px' }} {...props} />
+  ),
+  li: ({ ...props }) => (
+    <li style={{ marginBottom: '4px' }} {...props} />
+  ),
+  code: ({ inline, ...props }: { inline?: boolean; [key: string]: unknown }) => (
+    inline ? (
+      <code style={{ backgroundColor: '#f0f0f0', padding: '2px 4px', borderRadius: '3px', fontSize: '13px' }} {...props} />
+    ) : (
+      <code style={{ display: 'block', backgroundColor: '#f0f0f0', padding: '8px', borderRadius: '4px', fontSize: '13px', overflowX: 'auto', whiteSpace: 'pre-wrap' }} {...props} />
+    )
+  ),
+  strong: ({ ...props }) => (
+    <strong style={{ fontWeight: 'bold' }} {...props} />
+  ),
+  hr: ({ ...props }) => (
+    <hr style={{ border: 'none', borderTop: '1px solid #ddd', margin: '16px 0' }} {...props} />
+  ),
+  table: ({ ...props }) => (
+    <table style={{ borderCollapse: 'collapse', width: '100%', marginBottom: '8px' }} {...props} />
+  ),
+  th: ({ ...props }) => (
+    <th style={{ border: '1px solid #ddd', padding: '8px', backgroundColor: '#f5f5f5', textAlign: 'left' }} {...props} />
+  ),
+  td: ({ ...props }) => (
+    <td style={{ border: '1px solid #ddd', padding: '8px' }} {...props} />
+  ),
+  // Custom anchor handler to fix [Doc N] citation rendering
+  a: ({ href, children, ...props }: { href?: string; children?: React.ReactNode; [key: string]: unknown }) => {
+    // If href is undefined/empty, this is likely a [Doc N] reference-style link
+    // that react-markdown couldn't resolve. Render as plain text instead.
+    if (!href) {
+      return <span style={{ fontWeight: 600, color: '#1a73e8' }}>[{children}]</span>;
+    }
+    return <a href={href} {...props}>{children}</a>;
+  }
+};
+
 export function MessageList({ messages, streamingContent, isLoading }: MessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -74,48 +127,7 @@ export function MessageList({ messages, streamingContent, isLoading }: MessageLi
             ) : (
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
-                components={{
-                  h2: ({ ...props }) => (
-                    <h2 style={{ fontSize: '18px', fontWeight: 'bold', marginTop: '16px', marginBottom: '8px' }} {...props} />
-                  ),
-                  h3: ({ ...props }) => (
-                    <h3 style={{ fontSize: '16px', fontWeight: 'bold', marginTop: '12px', marginBottom: '6px' }} {...props} />
-                  ),
-                  p: ({ ...props }) => (
-                    <p style={{ marginBottom: '8px', lineHeight: '1.6' }} {...props} />
-                  ),
-                  ul: ({ ...props }) => (
-                    <ul style={{ marginLeft: '20px', marginBottom: '8px' }} {...props} />
-                  ),
-                  ol: ({ ...props }) => (
-                    <ol style={{ marginLeft: '20px', marginBottom: '8px' }} {...props} />
-                  ),
-                  li: ({ ...props }) => (
-                    <li style={{ marginBottom: '4px' }} {...props} />
-                  ),
-                  code: ({ inline, ...props }: { inline?: boolean; [key: string]: unknown }) => (
-                    inline ? (
-                      <code style={{ backgroundColor: '#f0f0f0', padding: '2px 4px', borderRadius: '3px', fontSize: '13px' }} {...props} />
-                    ) : (
-                      <code style={{ display: 'block', backgroundColor: '#f0f0f0', padding: '8px', borderRadius: '4px', fontSize: '13px', overflowX: 'auto', whiteSpace: 'pre-wrap' }} {...props} />
-                    )
-                  ),
-                  strong: ({ ...props }) => (
-                    <strong style={{ fontWeight: 'bold' }} {...props} />
-                  ),
-                  hr: ({ ...props }) => (
-                    <hr style={{ border: 'none', borderTop: '1px solid #ddd', margin: '16px 0' }} {...props} />
-                  ),
-                  table: ({ ...props }) => (
-                    <table style={{ borderCollapse: 'collapse', width: '100%', marginBottom: '8px' }} {...props} />
-                  ),
-                  th: ({ ...props }) => (
-                    <th style={{ border: '1px solid #ddd', padding: '8px', backgroundColor: '#f5f5f5', textAlign: 'left' }} {...props} />
-                  ),
-                  td: ({ ...props }) => (
-                    <td style={{ border: '1px solid #ddd', padding: '8px' }} {...props} />
-                  )
-                }}
+                components={markdownComponents}
               >
                 {message.content}
               </ReactMarkdown>
@@ -157,48 +169,7 @@ export function MessageList({ messages, streamingContent, isLoading }: MessageLi
             {streamingContent ? (
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
-                components={{
-                  h2: ({ ...props }) => (
-                    <h2 style={{ fontSize: '18px', fontWeight: 'bold', marginTop: '16px', marginBottom: '8px' }} {...props} />
-                  ),
-                  h3: ({ ...props }) => (
-                    <h3 style={{ fontSize: '16px', fontWeight: 'bold', marginTop: '12px', marginBottom: '6px' }} {...props} />
-                  ),
-                  p: ({ ...props }) => (
-                    <p style={{ marginBottom: '8px', lineHeight: '1.6' }} {...props} />
-                  ),
-                  ul: ({ ...props }) => (
-                    <ul style={{ marginLeft: '20px', marginBottom: '8px' }} {...props} />
-                  ),
-                  ol: ({ ...props }) => (
-                    <ol style={{ marginLeft: '20px', marginBottom: '8px' }} {...props} />
-                  ),
-                  li: ({ ...props }) => (
-                    <li style={{ marginBottom: '4px' }} {...props} />
-                  ),
-                  code: ({ inline, ...props }: { inline?: boolean; [key: string]: unknown }) => (
-                    inline ? (
-                      <code style={{ backgroundColor: '#f0f0f0', padding: '2px 4px', borderRadius: '3px', fontSize: '13px' }} {...props} />
-                    ) : (
-                      <code style={{ display: 'block', backgroundColor: '#f0f0f0', padding: '8px', borderRadius: '4px', fontSize: '13px', overflowX: 'auto', whiteSpace: 'pre-wrap' }} {...props} />
-                    )
-                  ),
-                  strong: ({ ...props }) => (
-                    <strong style={{ fontWeight: 'bold' }} {...props} />
-                  ),
-                  hr: ({ ...props }) => (
-                    <hr style={{ border: 'none', borderTop: '1px solid #ddd', margin: '16px 0' }} {...props} />
-                  ),
-                  table: ({ ...props }) => (
-                    <table style={{ borderCollapse: 'collapse', width: '100%', marginBottom: '8px' }} {...props} />
-                  ),
-                  th: ({ ...props }) => (
-                    <th style={{ border: '1px solid #ddd', padding: '8px', backgroundColor: '#f5f5f5', textAlign: 'left' }} {...props} />
-                  ),
-                  td: ({ ...props }) => (
-                    <td style={{ border: '1px solid #ddd', padding: '8px' }} {...props} />
-                  )
-                }}
+                components={markdownComponents}
               >
                 {streamingContent}
               </ReactMarkdown>
