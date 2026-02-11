@@ -28,7 +28,8 @@ export async function fetchDocuments(): Promise<Document[]> {
     throw new Error(error.detail || `Failed to fetch documents: ${response.statusText}`);
   }
 
-  return response.json();
+  const data = await response.json();
+  return data.documents;
 }
 
 export async function deleteDocument(documentId: string): Promise<void> {
