@@ -1,5 +1,5 @@
 export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
-  timestamp: Date;
+  timestamp: string; // ISO string format for JSON serialization compatibility
 }
