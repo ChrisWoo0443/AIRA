@@ -39,12 +39,12 @@ def check_ollama_status() -> Dict[str, Any]:
         }
 
 
-def test_completion(model: str = "llama3.2") -> Dict[str, Any]:
+def test_completion(model: str = "llama3:8b") -> Dict[str, Any]:
     """
     Test Ollama completion with a simple prompt.
 
     Args:
-        model: Model name to use (default: llama3.2)
+        model: Model name to use (default: llama3:8b)
 
     Returns:
         dict: Completion result with keys:

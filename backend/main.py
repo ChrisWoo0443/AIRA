@@ -48,5 +48,5 @@ async def ollama_status():
     return {
         "ollama": status_info,
         "test": test_result if test_result else {"success": False, "error": "Ollama not connected"},
-        "recommendation": "llama3.2 or llama3.2-vision for document Q&A"
+        "recommendation": "llama3:8b for document Q&A"
     }
