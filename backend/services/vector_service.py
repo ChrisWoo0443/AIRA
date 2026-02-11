@@ -61,6 +61,10 @@ def add_chunks(
     """
     collection = get_collection()
 
+    # Validate filename to prevent empty metadata
+    if not filename or not filename.strip():
+        filename = "Unknown Document"
+
     total_chunks = len(chunks)
 
     # Prepare data for batch insertion

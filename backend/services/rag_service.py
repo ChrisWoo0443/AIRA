@@ -83,12 +83,15 @@ async def generate_rag_response(
     context_parts = []
     source_map = []
     for idx, result in enumerate(search_results, 1):
+        # Fallback for empty filenames from corrupted metadata
+        display_filename = result['source_filename'] if result['source_filename'] else 'Unknown Document'
+
         context_parts.append(
-            f"[Doc {idx}] Source: {result['source_filename']} (Section {result['chunk_position']}):\n{result['text']}"
+            f"[Doc {idx}] Source: {display_filename} (Section {result['chunk_position']}):\n{result['text']}"
         )
         source_entry = {
             'doc_number': idx,
-            'filename': result['source_filename'],
+            'filename': display_filename,
             'chunk_position': result['chunk_position']
         }
         source_map.append(source_entry)
