@@ -1,34 +1,96 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import { useState, useEffect } from 'react'
 import './App.css'
 
+interface HealthResponse {
+  status: string
+  service: string
+}
+
 function App() {
-  const [count, setCount] = useState(0)
+  const [health, setHealth] = useState<HealthResponse | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchHealth = async () => {
+      try {
+        const response = await fetch('/api/health')
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        const data = await response.json()
+        setHealth(data)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch health status')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchHealth()
+  }, [])
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <div style={{
+      maxWidth: '800px',
+      margin: '50px auto',
+      padding: '20px',
+      fontFamily: 'system-ui, -apple-system, sans-serif'
+    }}>
+      <h1>Research Agent - Frontend</h1>
+
+      <div style={{
+        marginTop: '30px',
+        padding: '20px',
+        border: '1px solid #ddd',
+        borderRadius: '8px',
+        backgroundColor: '#f9f9f9'
+      }}>
+        <h2>Backend Health Check</h2>
+
+        {loading && <p>Loading...</p>}
+
+        {error && (
+          <div style={{ color: '#d32f2f', padding: '10px', backgroundColor: '#ffebee', borderRadius: '4px' }}>
+            <strong>Error:</strong> {error}
+          </div>
+        )}
+
+        {health && (
+          <div>
+            <div style={{ marginBottom: '10px' }}>
+              <span
+                style={{
+                  display: 'inline-block',
+                  padding: '4px 12px',
+                  borderRadius: '12px',
+                  backgroundColor: health.status === 'ok' ? '#4caf50' : '#ff9800',
+                  color: 'white',
+                  fontWeight: 'bold',
+                  fontSize: '14px'
+                }}
+              >
+                {health.status.toUpperCase()}
+              </span>
+            </div>
+            <div style={{ marginTop: '15px' }}>
+              <strong>Service:</strong> {health.service}
+            </div>
+            <div style={{
+              marginTop: '15px',
+              padding: '10px',
+              backgroundColor: '#fff',
+              border: '1px solid #e0e0e0',
+              borderRadius: '4px',
+              fontFamily: 'monospace',
+              fontSize: '14px'
+            }}>
+              <pre style={{ margin: 0 }}>{JSON.stringify(health, null, 2)}</pre>
+            </div>
+          </div>
+        )}
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    </div>
   )
 }
 
