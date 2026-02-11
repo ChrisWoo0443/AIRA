@@ -1,4 +1,4 @@
-import { Document } from '../types/document';
+import type { Document } from '../types/document';
 
 interface DocumentListProps {
   documents: Document[];

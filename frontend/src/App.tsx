@@ -1,95 +1,72 @@
 import { useState, useEffect } from 'react'
 import './App.css'
-
-interface HealthResponse {
-  status: string
-  service: string
-}
+import { FileUpload } from './components/FileUpload'
+import { DocumentList } from './components/DocumentList'
+import type { Document } from './types/document'
+import * as api from './services/api'
 
 function App() {
-  const [health, setHealth] = useState<HealthResponse | null>(null)
+  const [documents, setDocuments] = useState<Document[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    const fetchHealth = async () => {
-      try {
-        const response = await fetch('/api/health')
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-        const data = await response.json()
-        setHealth(data)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch health status')
-      } finally {
-        setLoading(false)
-      }
+  const loadDocuments = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const docs = await api.fetchDocuments()
+      setDocuments(docs)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load documents')
+    } finally {
+      setLoading(false)
     }
+  }
 
-    fetchHealth()
+  const handleDelete = async (id: string) => {
+    try {
+      await api.deleteDocument(id)
+      await loadDocuments()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete document')
+    }
+  }
+
+  useEffect(() => {
+    loadDocuments()
   }, [])
 
   return (
     <div style={{
-      maxWidth: '800px',
+      maxWidth: '900px',
       margin: '50px auto',
       padding: '20px',
       fontFamily: 'system-ui, -apple-system, sans-serif'
     }}>
-      <h1>Research Agent - Frontend</h1>
+      <h1 style={{ fontSize: '32px', marginBottom: '32px', color: '#333' }}>
+        Research Agent
+      </h1>
 
-      <div style={{
-        marginTop: '30px',
-        padding: '20px',
-        border: '1px solid #ddd',
-        borderRadius: '8px',
-        backgroundColor: '#f9f9f9'
-      }}>
-        <h2>Backend Health Check</h2>
+      {error && (
+        <div style={{
+          padding: '12px',
+          backgroundColor: '#fee',
+          color: '#c00',
+          borderRadius: '4px',
+          marginBottom: '16px',
+          fontSize: '14px'
+        }}>
+          <strong>Error:</strong> {error}
+        </div>
+      )}
 
-        {loading && <p>Loading...</p>}
+      <FileUpload onUploadComplete={loadDocuments} />
 
-        {error && (
-          <div style={{ color: '#d32f2f', padding: '10px', backgroundColor: '#ffebee', borderRadius: '4px' }}>
-            <strong>Error:</strong> {error}
-          </div>
-        )}
-
-        {health && (
-          <div>
-            <div style={{ marginBottom: '10px' }}>
-              <span
-                style={{
-                  display: 'inline-block',
-                  padding: '4px 12px',
-                  borderRadius: '12px',
-                  backgroundColor: health.status === 'ok' ? '#4caf50' : '#ff9800',
-                  color: 'white',
-                  fontWeight: 'bold',
-                  fontSize: '14px'
-                }}
-              >
-                {health.status.toUpperCase()}
-              </span>
-            </div>
-            <div style={{ marginTop: '15px' }}>
-              <strong>Service:</strong> {health.service}
-            </div>
-            <div style={{
-              marginTop: '15px',
-              padding: '10px',
-              backgroundColor: '#fff',
-              border: '1px solid #e0e0e0',
-              borderRadius: '4px',
-              fontFamily: 'monospace',
-              fontSize: '14px'
-            }}>
-              <pre style={{ margin: 0 }}>{JSON.stringify(health, null, 2)}</pre>
-            </div>
-          </div>
-        )}
-      </div>
+      <DocumentList
+        documents={documents}
+        onDelete={handleDelete}
+        loading={loading}
+      />
     </div>
   )
 }

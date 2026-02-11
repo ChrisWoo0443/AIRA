@@ -1,4 +1,4 @@
-import { Document, UploadResponse } from '../types/document';
+import type { Document, UploadResponse } from '../types/document';
 
 const API_BASE = '/api/documents';
 
