@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import './App.css'
 import { FileUpload } from './components/FileUpload'
 import { DocumentList } from './components/DocumentList'
+import { Chat } from './components/Chat'
 import type { Document } from './types/document'
 import * as api from './services/api'
 
@@ -38,7 +39,7 @@ function App() {
 
   return (
     <div style={{
-      maxWidth: '900px',
+      maxWidth: '1000px',
       margin: '50px auto',
       padding: '20px',
       fontFamily: 'system-ui, -apple-system, sans-serif'
@@ -67,6 +68,14 @@ function App() {
         onDelete={handleDelete}
         loading={loading}
       />
+
+      <hr style={{ margin: '32px 0', border: 'none', borderTop: '1px solid #ddd' }} />
+
+      <h2 style={{ fontSize: '20px', color: '#333', marginBottom: '16px' }}>
+        Chat with your documents
+      </h2>
+
+      <Chat />
     </div>
   )
 }
