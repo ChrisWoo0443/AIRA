@@ -1,6 +1,7 @@
 import type { Document, UploadResponse } from '../types/document';
 
 const API_BASE = '/api/documents';
+const CHAT_API_BASE = '/api/chat';
 
 export async function uploadDocument(file: File): Promise<UploadResponse> {
   const formData = new FormData();
@@ -40,5 +41,83 @@ export async function deleteDocument(documentId: string): Promise<void> {
   if (!response.ok) {
     const error = await response.json().catch(() => ({ detail: 'Delete failed' }));
     throw new Error(error.detail || `Delete failed: ${response.statusText}`);
+  }
+}
+
+export async function createChatSession(): Promise<string> {
+  const response = await fetch(`${CHAT_API_BASE}/session/new`, {
+    method: 'POST',
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ detail: 'Failed to create session' }));
+    throw new Error(error.detail || `Failed to create session: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  return data.session_id;
+}
+
+export async function sendChatMessage(
+  message: string,
+  sessionId: string,
+  onChunk: (chunk: string) => void,
+  onComplete: () => void,
+  onError: (error: string) => void
+): Promise<void> {
+  try {
+    const response = await fetch(`${CHAT_API_BASE}/message`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message,
+        session_id: sessionId,
+        top_k: 5,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: 'Failed to send message' }));
+      throw new Error(error.detail || `Failed to send message: ${response.statusText}`);
+    }
+
+    const reader = response.body?.getReader();
+    if (!reader) {
+      throw new Error('No response body');
+    }
+
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const jsonStr = line.slice(6);
+          try {
+            const data = JSON.parse(jsonStr);
+            if (data.content) {
+              onChunk(data.content);
+            } else if (data.done) {
+              onComplete();
+            } else if (data.error) {
+              onError(data.error);
+            }
+          } catch (e) {
+            console.error('Failed to parse SSE data:', jsonStr);
+          }
+        }
+      }
+    }
+  } catch (error) {
+    onError(error instanceof Error ? error.message : 'Unknown error');
   }
 }
