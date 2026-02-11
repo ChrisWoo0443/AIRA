@@ -29,7 +29,7 @@ const markdownComponents = {
   li: ({ ...props }) => (
     <li style={{ marginBottom: '4px' }} {...props} />
   ),
-  code: ({ inline, ...props }: { inline?: boolean; [key: string]: unknown }) => (
+  code: ({ inline, ...props }: React.HTMLAttributes<HTMLElement> & { inline?: boolean }) => (
     inline ? (
       <code style={{ backgroundColor: '#f0f0f0', padding: '2px 4px', borderRadius: '3px', fontSize: '13px' }} {...props} />
     ) : (
@@ -52,7 +52,7 @@ const markdownComponents = {
     <td style={{ border: '1px solid #ddd', padding: '8px' }} {...props} />
   ),
   // Custom anchor handler to fix [Doc N] citation rendering
-  a: ({ href, children, ...props }: { href?: string; children?: React.ReactNode; [key: string]: unknown }) => {
+  a: ({ href, children, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { children?: React.ReactNode }) => {
     // If href is undefined/empty, this is likely a [Doc N] reference-style link
     // that react-markdown couldn't resolve. Render as plain text instead.
     if (!href) {

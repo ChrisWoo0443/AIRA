@@ -2,12 +2,13 @@ import { useState, useEffect, useRef } from 'react';
 import type { ChatMessage } from '../types/chat';
 import { ChatInput } from './ChatInput';
 import { MessageList } from './MessageList';
+import { useLocalStorage } from '../hooks/useLocalStorage';
 import * as api from '../services/api';
 
 export function Chat() {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [sessionId, setSessionId, clearSessionId] = useLocalStorage<string | null>('research_agent_session_id', null);
+  const [messages, setMessages, clearMessages] = useLocalStorage<ChatMessage[]>('research_agent_messages', []);
   const [isLoading, setIsLoading] = useState(false);
-  const [sessionId, setSessionId] = useState<string | null>(null);
   const [streamingContent, setStreamingContent] = useState('');
 
   // Ref to track accumulated streaming content (avoids stale closure in onComplete)
@@ -15,6 +16,12 @@ export function Chat() {
 
   useEffect(() => {
     const initSession = async () => {
+      // If sessionId already exists in localStorage (from previous session), use it
+      if (sessionId) {
+        return;
+      }
+
+      // Otherwise, create a new session
       try {
         const id = await api.createChatSession();
         setSessionId(id);
@@ -23,7 +30,7 @@ export function Chat() {
       }
     };
     initSession();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSubmit = async (message: string) => {
     if (!message.trim() || !sessionId || isLoading) {
@@ -34,7 +41,7 @@ export function Chat() {
     const userMessage: ChatMessage = {
       role: 'user',
       content: message,
-      timestamp: new Date()
+      timestamp: new Date().toISOString()
     };
     setMessages(prev => [...prev, userMessage]);
 
@@ -56,7 +63,7 @@ export function Chat() {
         const assistantMessage: ChatMessage = {
           role: 'assistant',
           content: streamingContentRef.current,
-          timestamp: new Date()
+          timestamp: new Date().toISOString()
         };
         setMessages(prev => [...prev, assistantMessage]);
         setStreamingContent('');
@@ -68,7 +75,7 @@ export function Chat() {
         const errorMessage: ChatMessage = {
           role: 'assistant',
           content: `Error: ${error}`,
-          timestamp: new Date()
+          timestamp: new Date().toISOString()
         };
         setMessages(prev => [...prev, errorMessage]);
         setStreamingContent('');
@@ -80,13 +87,26 @@ export function Chat() {
 
   const handleNewConversation = async () => {
     try {
-      const id = await api.createChatSession();
-      setSessionId(id);
-      setMessages([]);
+      // Delete the backend session (fire-and-forget for instant UI)
+      if (sessionId) {
+        api.deleteChatSession(sessionId).catch(err => {
+          console.warn('Failed to delete session:', err);
+        });
+      }
+
+      // Clear localStorage
+      clearSessionId();
+      clearMessages();
+
+      // Reset streaming state
       setStreamingContent('');
       streamingContentRef.current = '';
+
+      // Create a new session
+      const id = await api.createChatSession();
+      setSessionId(id);
     } catch (error) {
-      console.error('Failed to create new session:', error);
+      console.error('Failed to clear history:', error);
     }
   };
 
@@ -128,7 +148,7 @@ export function Chat() {
             fontWeight: 500
           }}
         >
-          New Chat
+          Clear History
         </button>
       </div>
 

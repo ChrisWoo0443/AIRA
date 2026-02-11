@@ -58,6 +58,18 @@ export async function createChatSession(): Promise<string> {
   return data.session_id;
 }
 
+export async function deleteChatSession(sessionId: string): Promise<void> {
+  const response = await fetch(`${CHAT_API_BASE}/session/${sessionId}`, {
+    method: 'DELETE',
+  });
+
+  // Don't throw on 404 - session may already be gone
+  if (!response.ok && response.status !== 404) {
+    const error = await response.json().catch(() => ({ detail: 'Failed to delete session' }));
+    throw new Error(error.detail || `Failed to delete session: ${response.statusText}`);
+  }
+}
+
 export async function sendChatMessage(
   message: string,
   sessionId: string,
