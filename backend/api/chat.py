@@ -13,7 +13,7 @@ from pydantic import BaseModel
 from services.rag_service import generate_rag_response
 
 
-router = APIRouter(prefix="/api/chat", tags=["chat"])
+router = APIRouter(prefix="/chat", tags=["chat"])
 
 # In-memory session storage: session_id -> list of message dicts
 sessions: Dict[str, List[Dict[str, str]]] = {}

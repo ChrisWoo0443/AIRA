@@ -28,7 +28,7 @@ async def root():
     return {
         "message": "Research Agent API",
         "docs": "/docs",
-        "endpoints": ["/health", "/api/ollama/status", "/search", "/api/chat"]
+        "endpoints": ["/health", "/api/ollama/status", "/search", "/chat"]
     }
 
 
