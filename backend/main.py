@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from ollama_client import check_ollama_status, test_completion
+from api.documents import router as documents_router
 
 app = FastAPI(title="Research Agent API")
 
@@ -12,6 +13,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Register API routers
+app.include_router(documents_router)
 
 
 @app.get("/")
