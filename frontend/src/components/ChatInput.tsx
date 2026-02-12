@@ -21,6 +21,8 @@ export function ChatInput({ onSubmit, disabled }: ChatInputProps) {
   return (
     <form className="flex gap-2 p-3 border-t border-gray-200 bg-white" onSubmit={handleSubmit}>
       <input
+        id="chat-input"
+        name="chat-input"
         type="text"
         value={input}
         onChange={(e) => setInput(e.target.value)}

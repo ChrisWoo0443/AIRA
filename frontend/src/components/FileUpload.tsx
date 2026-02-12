@@ -66,7 +66,7 @@ export function FileUpload({ onUploadComplete }: FileUploadProps) {
           isDragActive ? "bg-blue-50 border-blue-400" : "bg-gray-50 border-gray-300"
         )}
       >
-        <input {...getInputProps()} />
+        <input {...getInputProps()} id="file-upload" name="file-upload" />
         {uploading ? (
           <div>
             <div className="text-base text-gray-500">Uploading...</div>

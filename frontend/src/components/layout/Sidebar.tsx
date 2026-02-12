@@ -9,6 +9,7 @@ interface SidebarProps {
 export function Sidebar({ children }: SidebarProps) {
   const { isOpen, isPeeking, close, startPeek, stopPeek } = useSidebar();
   const peekTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const clearPeekTimeout = useCallback(() => {
     if (peekTimeoutRef.current) {
@@ -17,19 +18,36 @@ export function Sidebar({ children }: SidebarProps) {
     }
   }, []);
 
-  const handlePeekZoneEnter = useCallback(() => {
+  const clearCloseTimeout = useCallback(() => {
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
+  }, []);
+
+  const handleTriggerEnter = useCallback(() => {
     clearPeekTimeout();
+    clearCloseTimeout();
     peekTimeoutRef.current = setTimeout(() => {
       startPeek();
     }, 300);
-  }, [clearPeekTimeout, startPeek]);
+  }, [clearPeekTimeout, clearCloseTimeout, startPeek]);
 
-  const handlePeekZoneLeave = useCallback(() => {
+  const handleTriggerLeave = useCallback(() => {
     clearPeekTimeout();
+  }, [clearPeekTimeout]);
+
+  const handleSidebarEnter = useCallback(() => {
+    clearCloseTimeout();
+  }, [clearCloseTimeout]);
+
+  const handleSidebarLeave = useCallback(() => {
     if (isPeeking) {
-      stopPeek();
+      closeTimeoutRef.current = setTimeout(() => {
+        stopPeek();
+      }, 200);
     }
-  }, [clearPeekTimeout, isPeeking, stopPeek]);
+  }, [isPeeking, stopPeek]);
 
   const visible = isOpen || isPeeking;
 
@@ -44,63 +62,42 @@ export function Sidebar({ children }: SidebarProps) {
         />
       )}
 
-      {/* Sidebar — pinned mode (desktop open) */}
-      {isOpen && (
-        <aside className="hidden md:block w-72 h-full bg-white border-r border-gray-200 flex-shrink-0">
-          <div className="h-full overflow-y-auto p-4">
-            <h1 className="text-lg font-semibold text-gray-800 mb-4">
-              Research Agent
-            </h1>
-            {children}
-          </div>
-        </aside>
+      {/* Peek trigger strip — desktop only, when sidebar is closed */}
+      {!isOpen && !isPeeking && (
+        <div
+          className="hidden md:block fixed top-0 left-0 w-3 h-full z-50"
+          onMouseEnter={handleTriggerEnter}
+          onMouseLeave={handleTriggerLeave}
+        />
       )}
 
-      {/* Sidebar — mobile overlay */}
+      {/* Single sidebar element — adapts style based on mode */}
       <aside
         className={clsx(
-          'md:hidden fixed top-0 left-0 z-50 w-72 h-full bg-white',
+          'w-72 bg-white flex-shrink-0 z-50',
           'transition-transform duration-300 ease-in-out',
-          visible ? 'translate-x-0' : '-translate-x-full'
+          // Mobile: always fixed overlay
+          'fixed top-0 left-0 h-full',
+          // Desktop pinned (open): static with border
+          isOpen && 'md:static md:h-full md:border-r md:border-gray-200',
+          // Desktop closed/peeking: floating card
+          !isOpen && 'md:fixed md:top-2 md:left-2 md:h-[calc(100%-16px)] md:rounded-xl md:shadow-2xl md:border md:border-gray-200',
+          // Slide in/out
+          visible ? 'translate-x-0' : '-translate-x-full pointer-events-none'
         )}
+        onMouseEnter={isPeeking ? handleSidebarEnter : undefined}
+        onMouseLeave={isPeeking ? handleSidebarLeave : undefined}
       >
-        <div className="h-full overflow-y-auto p-4">
+        <div className={clsx(
+          'h-full overflow-y-auto p-4',
+          !isOpen && 'md:rounded-xl'
+        )}>
           <h1 className="text-lg font-semibold text-gray-800 mb-4">
             Research Agent
           </h1>
           {children}
         </div>
       </aside>
-
-      {/* Peek zone + floating sidebar (desktop only, when closed) */}
-      {!isOpen && (
-        <div
-          className="hidden md:block fixed top-0 left-0 z-50 h-full pointer-events-none"
-          onMouseLeave={handlePeekZoneLeave}
-        >
-          {/* Invisible trigger strip */}
-          <div
-            className="absolute top-0 left-0 w-3 h-full pointer-events-auto"
-            onMouseEnter={!isPeeking ? handlePeekZoneEnter : undefined}
-          />
-
-          {/* Floating sidebar — always in DOM, slides in/out */}
-          <aside
-            className={clsx(
-              'm-2 w-72 h-[calc(100%-16px)] bg-white rounded-xl shadow-2xl border border-gray-200',
-              'transition-transform duration-300 ease-in-out',
-              isPeeking ? 'translate-x-0 pointer-events-auto' : '-translate-x-full pointer-events-none'
-            )}
-          >
-            <div className="h-full overflow-y-auto p-4 rounded-xl">
-              <h1 className="text-lg font-semibold text-gray-800 mb-4">
-                Research Agent
-              </h1>
-              {children}
-            </div>
-          </aside>
-        </div>
-      )}
     </>
   );
 }
