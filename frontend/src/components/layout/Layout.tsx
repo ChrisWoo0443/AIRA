@@ -1,14 +1,14 @@
-import type { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { Sidebar } from './Sidebar';
 import { SidebarToggle } from './SidebarToggle';
-import { useSidebar } from '../../hooks/useSidebar';
+import { SidebarContext, useSidebarState, useSidebar } from '../../hooks/useSidebar';
 
 interface LayoutProps {
   sidebarContent: ReactNode;
   children: ReactNode;
 }
 
-export function Layout({ sidebarContent, children }: LayoutProps) {
+function LayoutInner({ sidebarContent, children }: LayoutProps) {
   const { isOpen, toggle } = useSidebar();
 
   return (
@@ -25,5 +25,15 @@ export function Layout({ sidebarContent, children }: LayoutProps) {
         </main>
       </div>
     </div>
+  );
+}
+
+export function Layout(props: LayoutProps) {
+  const sidebarState = useSidebarState();
+
+  return (
+    <SidebarContext.Provider value={sidebarState}>
+      <LayoutInner {...props} />
+    </SidebarContext.Provider>
   );
 }
