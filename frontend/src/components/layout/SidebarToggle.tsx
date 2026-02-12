@@ -10,11 +10,7 @@ export function SidebarToggle({ isOpen, onClick }: SidebarToggleProps) {
       className="p-2 rounded-lg hover:bg-gray-100 text-gray-600"
       aria-label={isOpen ? 'Close sidebar' : 'Open sidebar'}
     >
-      {isOpen ? (
-        <span className="text-xl">✕</span>
-      ) : (
-        <span className="text-xl">☰</span>
-      )}
+      <span className="text-xl">{isOpen ? '✕' : '☰'}</span>
     </button>
   );
 }
