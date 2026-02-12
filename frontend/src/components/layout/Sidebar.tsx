@@ -10,36 +10,31 @@ export function Sidebar({ children }: SidebarProps) {
   const { isOpen, isPeeking, close, startPeek, stopPeek } = useSidebar();
   const peekTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const handleHoverZoneEnter = useCallback(() => {
-    peekTimeoutRef.current = setTimeout(() => {
-      startPeek();
-    }, 300);
-  }, [startPeek]);
-
-  const handleHoverZoneLeave = useCallback(() => {
+  const clearPeekTimeout = useCallback(() => {
     if (peekTimeoutRef.current) {
       clearTimeout(peekTimeoutRef.current);
       peekTimeoutRef.current = null;
     }
   }, []);
 
-  const handleSidebarLeave = useCallback(() => {
-    stopPeek();
-  }, [stopPeek]);
+  const handlePeekZoneEnter = useCallback(() => {
+    clearPeekTimeout();
+    peekTimeoutRef.current = setTimeout(() => {
+      startPeek();
+    }, 300);
+  }, [clearPeekTimeout, startPeek]);
+
+  const handlePeekZoneLeave = useCallback(() => {
+    clearPeekTimeout();
+    if (isPeeking) {
+      stopPeek();
+    }
+  }, [clearPeekTimeout, isPeeking, stopPeek]);
 
   const visible = isOpen || isPeeking;
 
   return (
     <>
-      {/* Hover zone — only when sidebar is closed on desktop */}
-      {!isOpen && !isPeeking && (
-        <div
-          className="hidden md:block fixed top-0 left-0 w-3 h-full z-40"
-          onMouseEnter={handleHoverZoneEnter}
-          onMouseLeave={handleHoverZoneLeave}
-        />
-      )}
-
       {/* Backdrop — mobile only */}
       {visible && (
         <div
@@ -49,32 +44,59 @@ export function Sidebar({ children }: SidebarProps) {
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar — pinned mode (desktop open) */}
+      {isOpen && (
+        <aside className="hidden md:block w-72 h-full bg-white border-r border-gray-200 flex-shrink-0">
+          <div className="h-full overflow-y-auto p-4">
+            <h1 className="text-lg font-semibold text-gray-800 mb-4">
+              Research Agent
+            </h1>
+            {children}
+          </div>
+        </aside>
+      )}
+
+      {/* Sidebar — mobile overlay */}
       <aside
         className={clsx(
-          'bg-white flex-shrink-0',
+          'md:hidden fixed top-0 left-0 z-50 w-72 h-full bg-white',
           'transition-transform duration-300 ease-in-out',
-          // Mobile: full-height fixed overlay
-          'fixed top-0 left-0 z-50 w-72 h-full',
-          // Desktop pinned: static, full height, border right
-          isOpen && !isPeeking && 'md:static md:border-r md:border-gray-200',
-          // Desktop peeking: floating card with gap, rounded, shadow
-          isPeeking && 'md:top-2 md:left-2 md:h-[calc(100%-16px)] md:rounded-xl md:shadow-2xl md:border md:border-gray-200',
-          // Slide in/out
           visible ? 'translate-x-0' : '-translate-x-full'
         )}
-        onMouseLeave={isPeeking ? handleSidebarLeave : undefined}
       >
-        <div className={clsx(
-          'h-full overflow-y-auto p-4',
-          isPeeking && 'md:rounded-xl'
-        )}>
+        <div className="h-full overflow-y-auto p-4">
           <h1 className="text-lg font-semibold text-gray-800 mb-4">
             Research Agent
           </h1>
           {children}
         </div>
       </aside>
+
+      {/* Peek zone + floating sidebar (desktop only, when closed) */}
+      {!isOpen && (
+        <div
+          className="hidden md:block fixed top-0 left-0 z-50 h-full"
+          onMouseEnter={!isPeeking ? handlePeekZoneEnter : undefined}
+          onMouseLeave={handlePeekZoneLeave}
+        >
+          {/* Invisible trigger strip when not peeking */}
+          {!isPeeking && (
+            <div className="w-3 h-full" />
+          )}
+
+          {/* Floating sidebar when peeking */}
+          {isPeeking && (
+            <aside className="m-2 w-72 h-[calc(100%-16px)] bg-white rounded-xl shadow-2xl border border-gray-200">
+              <div className="h-full overflow-y-auto p-4 rounded-xl">
+                <h1 className="text-lg font-semibold text-gray-800 mb-4">
+                  Research Agent
+                </h1>
+                {children}
+              </div>
+            </aside>
+          )}
+        </div>
+      )}
     </>
   );
 }
