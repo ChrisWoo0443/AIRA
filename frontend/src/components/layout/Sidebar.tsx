@@ -28,7 +28,6 @@ export function Sidebar({ children }: SidebarProps) {
   }, [stopPeek]);
 
   const visible = isOpen || isPeeking;
-  const isFloating = isPeeking || (!isOpen && isPeeking);
 
   return (
     <>
@@ -41,15 +40,10 @@ export function Sidebar({ children }: SidebarProps) {
         />
       )}
 
-      {/* Backdrop */}
+      {/* Backdrop — mobile only */}
       {visible && (
         <div
-          className={clsx(
-            'fixed inset-0 bg-black/50 z-40 transition-opacity duration-300',
-            // Mobile: always show when sidebar visible
-            // Desktop: only show when peeking (floating)
-            isPeeking ? 'opacity-100' : 'md:hidden'
-          )}
+          className="fixed inset-0 bg-black/50 z-40 transition-opacity duration-300 md:hidden"
           onClick={close}
           aria-hidden="true"
         />
@@ -58,19 +52,23 @@ export function Sidebar({ children }: SidebarProps) {
       {/* Sidebar */}
       <aside
         className={clsx(
-          'w-72 h-full bg-white border-r border-gray-200 flex-shrink-0',
+          'bg-white flex-shrink-0',
           'transition-transform duration-300 ease-in-out',
-          // Mobile: always fixed overlay
-          'fixed top-0 left-0 z-50',
-          // Desktop: static when open, fixed when peeking
-          isOpen && !isPeeking && 'md:static',
-          isFloating && 'md:fixed md:z-50',
+          // Mobile: full-height fixed overlay
+          'fixed top-0 left-0 z-50 w-72 h-full',
+          // Desktop pinned: static, full height, border right
+          isOpen && !isPeeking && 'md:static md:border-r md:border-gray-200',
+          // Desktop peeking: floating card with gap, rounded, shadow
+          isPeeking && 'md:top-2 md:left-2 md:h-[calc(100%-16px)] md:rounded-xl md:shadow-2xl md:border md:border-gray-200',
           // Slide in/out
           visible ? 'translate-x-0' : '-translate-x-full'
         )}
         onMouseLeave={isPeeking ? handleSidebarLeave : undefined}
       >
-        <div className="h-full overflow-y-auto p-4">
+        <div className={clsx(
+          'h-full overflow-y-auto p-4',
+          isPeeking && 'md:rounded-xl'
+        )}>
           <h1 className="text-lg font-semibold text-gray-800 mb-4">
             Research Agent
           </h1>
