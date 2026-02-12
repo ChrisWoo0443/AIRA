@@ -5,7 +5,11 @@ import { MessageList } from './MessageList';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import * as api from '../services/api';
 
-export function Chat() {
+interface ChatProps {
+  selectedModel?: string;
+}
+
+export function Chat({ selectedModel }: ChatProps) {
   const [sessionId, setSessionId, clearSessionId] = useLocalStorage<string | null>('research_agent_session_id', null);
   const [messages, setMessages, clearMessages] = useLocalStorage<ChatMessage[]>('research_agent_messages', []);
   const [isLoading, setIsLoading] = useState(false);
@@ -81,7 +85,8 @@ export function Chat() {
         setStreamingContent('');
         streamingContentRef.current = '';
         setIsLoading(false);
-      }
+      },
+      selectedModel
     );
   };
 

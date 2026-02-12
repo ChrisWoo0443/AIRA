@@ -4,7 +4,7 @@ RAG service orchestrating document retrieval and LLM response generation.
 Combines semantic search with streaming chat completion for context-aware answers.
 """
 
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Optional
 from services.retrieval_service import search_documents
 from ollama_client import stream_chat_completion
 
@@ -54,7 +54,8 @@ Now answer the user's question based on these documents."""
 async def generate_rag_response(
     query: str,
     conversation_history: list[dict],
-    top_k: int = 5
+    top_k: int = 5,
+    model: Optional[str] = None,
 ) -> AsyncGenerator[str, None]:
     """
     Generate a streaming RAG response by retrieving relevant chunks and calling LLM.
@@ -84,15 +85,19 @@ async def generate_rag_response(
     source_map = []
     for idx, result in enumerate(search_results, 1):
         # Fallback for empty filenames from corrupted metadata
-        display_filename = result['source_filename'] if result['source_filename'] else 'Unknown Document'
+        display_filename = (
+            result["source_filename"]
+            if result["source_filename"]
+            else "Unknown Document"
+        )
 
         context_parts.append(
             f"[Doc {idx}] Source: {display_filename} (Section {result['chunk_position']}):\n{result['text']}"
         )
         source_entry = {
-            'doc_number': idx,
-            'filename': display_filename,
-            'chunk_position': result['chunk_position']
+            "doc_number": idx,
+            "filename": display_filename,
+            "chunk_position": result["chunk_position"],
         }
         source_map.append(source_entry)
 
@@ -102,7 +107,9 @@ async def generate_rag_response(
     messages = [
         {
             "role": "system",
-            "content": SYSTEM_PROMPT_TEMPLATE.format(context=context, num_docs=len(search_results))
+            "content": SYSTEM_PROMPT_TEMPLATE.format(
+                context=context, num_docs=len(search_results)
+            ),
         }
     ]
 
@@ -110,13 +117,13 @@ async def generate_rag_response(
     messages.extend(conversation_history)
 
     # Add current user query
-    messages.append({
-        "role": "user",
-        "content": query
-    })
+    messages.append({"role": "user", "content": query})
 
-    # Stream LLM response
-    async for chunk in stream_chat_completion(messages):
+    # Stream LLM response with selected model (use passed model or fall back to global)
+    from ollama_client import get_selected_model
+
+    model_to_use = model if model else get_selected_model()
+    async for chunk in stream_chat_completion(messages, model_to_use):
         yield chunk
 
     # Append sources footer after LLM completes

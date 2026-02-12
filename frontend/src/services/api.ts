@@ -75,7 +75,8 @@ export async function sendChatMessage(
   sessionId: string,
   onChunk: (chunk: string) => void,
   onComplete: () => void,
-  onError: (error: string) => void
+  onError: (error: string) => void,
+  model?: string
 ): Promise<void> {
   try {
     const response = await fetch(`${CHAT_API_BASE}/message`, {
@@ -87,6 +88,7 @@ export async function sendChatMessage(
         message,
         session_id: sessionId,
         top_k: 5,
+        model,
       }),
     });
 
@@ -131,5 +133,34 @@ export async function sendChatMessage(
     }
   } catch (error) {
     onError(error instanceof Error ? error.message : 'Unknown error');
+  }
+}
+
+export async function listModels(): Promise<string[]> {
+  const response = await fetch('/api/models');
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ detail: 'Failed to list models' }));
+    throw new Error(error.detail || `Failed to list models: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  return data.models;
+}
+
+export async function selectModel(modelName: string): Promise<void> {
+  const response = await fetch('/api/model/select', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model_name: modelName,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ detail: 'Failed to select model' }));
+    throw new Error(error.detail || `Failed to select model: ${response.statusText}`);
   }
 }

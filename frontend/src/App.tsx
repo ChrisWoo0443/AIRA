@@ -3,6 +3,7 @@ import './App.css'
 import { FileUpload } from './components/FileUpload'
 import { DocumentList } from './components/DocumentList'
 import { Chat } from './components/Chat'
+import { ModelSelector } from './components/ModelSelector'
 import type { Document } from './types/document'
 import * as api from './services/api'
 
@@ -10,6 +11,7 @@ function App() {
   const [documents, setDocuments] = useState<Document[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [selectedModel, setSelectedModel] = useState<string>('')
 
   const loadDocuments = async () => {
     try {
@@ -61,6 +63,8 @@ function App() {
         </div>
       )}
 
+      <ModelSelector onModelChange={setSelectedModel} />
+
       <FileUpload onUploadComplete={loadDocuments} />
 
       <DocumentList
@@ -75,7 +79,7 @@ function App() {
         Chat with your documents
       </h2>
 
-      <Chat />
+      <Chat selectedModel={selectedModel} />
     </div>
   )
 }

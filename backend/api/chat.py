@@ -5,6 +5,7 @@ Provides conversation endpoints for RAG-powered chat with the LLM.
 """
 
 import json
+from typing import Optional
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -15,7 +16,7 @@ from services.session_service import (
     get_session as get_session_db,
     update_session_messages,
     delete_session as delete_session_db,
-    get_db
+    get_db,
 )
 
 
@@ -24,18 +25,22 @@ router = APIRouter(prefix="/chat", tags=["chat"])
 
 class ChatRequest(BaseModel):
     """Request body for chat message endpoint"""
+
     message: str
     session_id: str
     top_k: int = 5
+    model: Optional[str] = None
 
 
 class NewSessionResponse(BaseModel):
     """Response for new session creation"""
+
     session_id: str
 
 
 class SessionResponse(BaseModel):
     """Response for session retrieval"""
+
     session_id: str
     messages: list
     created_at: str
@@ -80,7 +85,7 @@ async def get_session_endpoint(session_id: str, db: DBSession = Depends(get_db))
         session_id=session.id,
         messages=session.messages,
         created_at=session.created_at,
-        updated_at=session.updated_at
+        updated_at=session.updated_at,
     )
 
 
@@ -128,7 +133,8 @@ async def chat_message(request: ChatRequest, db: DBSession = Depends(get_db)):
             async for chunk in generate_rag_response(
                 query=request.message,
                 conversation_history=conversation_history,
-                top_k=request.top_k
+                top_k=request.top_k,
+                model=request.model,
             ):
                 accumulated_response += chunk
 
@@ -137,14 +143,8 @@ async def chat_message(request: ChatRequest, db: DBSession = Depends(get_db)):
 
             # After streaming completes, update session in database
             updated_messages = conversation_history + [
-                {
-                    "role": "user",
-                    "content": request.message
-                },
-                {
-                    "role": "assistant",
-                    "content": accumulated_response
-                }
+                {"role": "user", "content": request.message},
+                {"role": "assistant", "content": accumulated_response},
             ]
 
             update_session_messages(db, request.session_id, updated_messages)
@@ -162,6 +162,6 @@ async def chat_message(request: ChatRequest, db: DBSession = Depends(get_db)):
         headers={
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
-            "X-Accel-Buffering": "no"
-        }
+            "X-Accel-Buffering": "no",
+        },
     )
