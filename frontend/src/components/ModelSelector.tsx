@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import clsx from 'clsx';
 import * as api from '../services/api';
 
 interface ModelSelectorProps {
@@ -19,9 +20,9 @@ export function ModelSelector({ onModelChange }: ModelSelectorProps) {
         setError(null);
         const availableModels = await api.listModels();
         setModels(availableModels);
-        
+
         // Set initial selection (prefer llama3 if available)
-        const preferredModel = availableModels.find(m => m.includes('llama3')) || 
+        const preferredModel = availableModels.find(m => m.includes('llama3')) ||
                               availableModels.find(m => m.includes('llama')) ||
                               availableModels[0];
         if (preferredModel) {
@@ -58,16 +59,16 @@ export function ModelSelector({ onModelChange }: ModelSelectorProps) {
 
   if (loading) {
     return (
-      <div style={{ padding: '16px', textAlign: 'center' }}>
+      <div className="p-4 text-center">
         Loading models...
       </div>
     );
   }
 
   return (
-    <div style={{ padding: '16px', marginBottom: '16px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-        <label htmlFor="model-select" style={{ fontWeight: 500, color: '#333' }}>
+    <div className="p-4 mb-4">
+      <div className="flex items-center gap-4">
+        <label htmlFor="model-select" className="font-medium text-gray-800">
           AI Model:
         </label>
         <select
@@ -75,15 +76,10 @@ export function ModelSelector({ onModelChange }: ModelSelectorProps) {
           value={selectedModel}
           onChange={(e) => handleSelectModel(e.target.value)}
           disabled={selecting || models.length === 0}
-          style={{
-            padding: '8px 12px',
-            fontSize: '14px',
-            fontFamily: 'system-ui, -apple-system, sans-serif',
-            border: '1px solid #ddd',
-            borderRadius: '4px',
-            backgroundColor: selecting ? '#f5f5f5' : '#fff',
-            cursor: selecting ? 'not-allowed' : 'pointer',
-          }}
+          className={clsx(
+            "px-3 py-2 text-sm font-sans border border-gray-200 rounded",
+            selecting ? "bg-gray-100 cursor-not-allowed" : "bg-white cursor-pointer"
+          )}
         >
           {models.map((model) => (
             <option key={model} value={model}>
@@ -92,29 +88,17 @@ export function ModelSelector({ onModelChange }: ModelSelectorProps) {
           ))}
         </select>
         {selecting && (
-          <span style={{ fontSize: '14px', color: '#666' }}>Selecting...</span>
+          <span className="text-sm text-gray-500">Selecting...</span>
         )}
       </div>
-      
+
       {error && (
-        <div style={{
-          marginTop: '8px',
-          padding: '8px',
-          backgroundColor: '#fee',
-          color: '#c00',
-          borderRadius: '4px',
-          fontSize: '14px',
-        }}>
+        <div className="mt-2 p-2 bg-red-50 text-red-700 rounded text-sm">
           <strong>Error:</strong> {error}
         </div>
       )}
-      
-      <div style={{ 
-        marginTop: '8px', 
-        fontSize: '12px', 
-        color: '#666',
-        fontStyle: 'italic'
-      }}>
+
+      <div className="mt-2 text-xs text-gray-500 italic">
         Current model: {selectedModel || 'None selected'}
       </div>
     </div>

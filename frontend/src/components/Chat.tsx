@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import clsx from 'clsx';
 import type { ChatMessage } from '../types/chat';
 import { ChatInput } from './ChatInput';
 import { MessageList } from './MessageList';
@@ -116,42 +117,16 @@ export function Chat({ selectedModel }: ChatProps) {
   };
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        height: '600px',
-        border: '1px solid #ddd',
-        borderRadius: '8px',
-        overflow: 'hidden',
-        backgroundColor: '#fff'
-      }}
-    >
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          padding: '16px',
-          borderBottom: '1px solid #ddd',
-          backgroundColor: '#fff'
-        }}
-      >
-        <h2 style={{ fontSize: '20px', margin: 0, color: '#333' }}>Chat</h2>
+    <div className="flex flex-col h-[600px] border border-gray-200 rounded-lg overflow-hidden bg-white">
+      <div className="flex justify-between items-center p-4 border-b border-gray-200 bg-white">
+        <h2 className="text-xl text-gray-800 m-0">Chat</h2>
         <button
           onClick={handleNewConversation}
           disabled={isLoading}
-          style={{
-            padding: '6px 12px',
-            fontSize: '14px',
-            fontFamily: 'system-ui, -apple-system, sans-serif',
-            backgroundColor: isLoading ? '#ccc' : '#6c757d',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: isLoading ? 'not-allowed' : 'pointer',
-            fontWeight: 500
-          }}
+          className={clsx(
+            "px-3 py-1.5 text-sm font-medium text-white rounded border-none",
+            isLoading ? "bg-gray-400 cursor-not-allowed" : "bg-gray-600 cursor-pointer hover:bg-gray-700"
+          )}
         >
           Clear History
         </button>

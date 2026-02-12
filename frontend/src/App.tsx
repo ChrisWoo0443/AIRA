@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import './App.css'
 import { FileUpload } from './components/FileUpload'
 import { DocumentList } from './components/DocumentList'
 import { Chat } from './components/Chat'
@@ -40,25 +39,13 @@ function App() {
   }, [])
 
   return (
-    <div style={{
-      maxWidth: '1000px',
-      margin: '50px auto',
-      padding: '20px',
-      fontFamily: 'system-ui, -apple-system, sans-serif'
-    }}>
-      <h1 style={{ fontSize: '32px', marginBottom: '32px', color: '#333' }}>
+    <div className="max-w-4xl mx-auto my-12 px-5 font-sans">
+      <h1 className="text-3xl mb-8 text-gray-800">
         Research Agent
       </h1>
 
       {error && (
-        <div style={{
-          padding: '12px',
-          backgroundColor: '#fee',
-          color: '#c00',
-          borderRadius: '4px',
-          marginBottom: '16px',
-          fontSize: '14px'
-        }}>
+        <div className="p-3 bg-red-50 text-red-700 rounded mb-4 text-sm">
           <strong>Error:</strong> {error}
         </div>
       )}
@@ -73,9 +60,9 @@ function App() {
         loading={loading}
       />
 
-      <hr style={{ margin: '32px 0', border: 'none', borderTop: '1px solid #ddd' }} />
+      <hr className="my-8 border-t border-gray-200" />
 
-      <h2 style={{ fontSize: '20px', color: '#333', marginBottom: '16px' }}>
+      <h2 className="text-xl text-gray-800 mb-4">
         Chat with your documents
       </h2>
 

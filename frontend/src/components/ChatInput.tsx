@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import clsx from 'clsx';
 import type { FormEvent } from 'react';
 
 interface ChatInputProps {
@@ -18,48 +19,25 @@ export function ChatInput({ onSubmit, disabled }: ChatInputProps) {
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      style={{
-        display: 'flex',
-        gap: '8px',
-        padding: '12px',
-        borderTop: '1px solid #ddd',
-        backgroundColor: '#fff'
-      }}
-    >
+    <form className="flex gap-2 p-3 border-t border-gray-200 bg-white" onSubmit={handleSubmit}>
       <input
         type="text"
         value={input}
         onChange={(e) => setInput(e.target.value)}
         placeholder="Ask a question about your documents..."
         disabled={disabled}
-        style={{
-          flex: 1,
-          padding: '8px 12px',
-          fontSize: '14px',
-          fontFamily: 'system-ui, -apple-system, sans-serif',
-          border: '1px solid #ddd',
-          borderRadius: '4px',
-          outline: 'none',
-          backgroundColor: disabled ? '#f5f5f5' : '#fff',
-          color: disabled ? '#999' : '#333'
-        }}
+        className={clsx(
+          "flex-1 px-3 py-2 text-sm font-sans border border-gray-200 rounded outline-none",
+          disabled ? "bg-gray-100 text-gray-400" : "bg-white text-gray-800"
+        )}
       />
       <button
         type="submit"
         disabled={disabled || !input.trim()}
-        style={{
-          padding: '8px 16px',
-          fontSize: '14px',
-          fontFamily: 'system-ui, -apple-system, sans-serif',
-          backgroundColor: (disabled || !input.trim()) ? '#ccc' : '#007bff',
-          color: '#fff',
-          border: 'none',
-          borderRadius: '4px',
-          cursor: (disabled || !input.trim()) ? 'not-allowed' : 'pointer',
-          fontWeight: 500
-        }}
+        className={clsx(
+          "px-4 py-2 text-sm font-sans font-medium text-white rounded border-none",
+          (disabled || !input.trim()) ? "bg-gray-300 cursor-not-allowed" : "bg-blue-600 cursor-pointer hover:bg-blue-700"
+        )}
       >
         Send
       </button>

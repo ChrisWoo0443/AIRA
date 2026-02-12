@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import clsx from 'clsx';
 import { useDropzone } from 'react-dropzone';
 import { uploadDocument } from '../services/api';
 
@@ -56,36 +57,30 @@ export function FileUpload({ onUploadComplete }: FileUploadProps) {
     multiple: false,
   });
 
-  const dropzoneStyle: React.CSSProperties = {
-    border: '2px dashed #ccc',
-    borderRadius: '8px',
-    padding: '40px 20px',
-    textAlign: 'center',
-    cursor: 'pointer',
-    backgroundColor: isDragActive ? '#f0f8ff' : '#fafafa',
-    borderColor: isDragActive ? '#4a90e2' : '#ccc',
-    transition: 'all 0.2s ease',
-    marginBottom: '24px',
-  };
-
   return (
     <div>
-      <div {...getRootProps()} style={dropzoneStyle}>
+      <div
+        {...getRootProps()}
+        className={clsx(
+          "border-2 border-dashed rounded-lg py-10 px-5 text-center cursor-pointer mb-6 transition-all duration-200",
+          isDragActive ? "bg-blue-50 border-blue-400" : "bg-gray-50 border-gray-300"
+        )}
+      >
         <input {...getInputProps()} />
         {uploading ? (
           <div>
-            <div style={{ fontSize: '16px', color: '#666' }}>Uploading...</div>
+            <div className="text-base text-gray-500">Uploading...</div>
           </div>
         ) : isDragActive ? (
-          <div style={{ fontSize: '16px', color: '#4a90e2', fontWeight: 500 }}>
+          <div className="text-base text-blue-500 font-medium">
             Drop the file here
           </div>
         ) : (
           <div>
-            <div style={{ fontSize: '16px', color: '#333', marginBottom: '8px' }}>
+            <div className="text-base text-gray-800 mb-2">
               Drag and drop a file here, or click to select
             </div>
-            <div style={{ fontSize: '14px', color: '#999' }}>
+            <div className="text-sm text-gray-400">
               Supported: PDF, TXT, MD (max 10MB)
             </div>
           </div>
@@ -93,27 +88,13 @@ export function FileUpload({ onUploadComplete }: FileUploadProps) {
       </div>
 
       {error && (
-        <div style={{
-          padding: '12px',
-          backgroundColor: '#fee',
-          color: '#c00',
-          borderRadius: '4px',
-          marginBottom: '16px',
-          fontSize: '14px'
-        }}>
+        <div className="p-3 bg-red-50 text-red-700 rounded mb-4 text-sm">
           {error}
         </div>
       )}
 
       {success && (
-        <div style={{
-          padding: '12px',
-          backgroundColor: '#efe',
-          color: '#060',
-          borderRadius: '4px',
-          marginBottom: '16px',
-          fontSize: '14px'
-        }}>
+        <div className="p-3 bg-green-50 text-green-800 rounded mb-4 text-sm">
           {success}
         </div>
       )}

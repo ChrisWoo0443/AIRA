@@ -25,7 +25,7 @@ export function DocumentList({ documents, onDelete, loading }: DocumentListProps
 
   if (loading) {
     return (
-      <div style={{ padding: '20px', textAlign: 'center', color: '#666' }}>
+      <div className="py-5 text-center text-gray-500">
         Loading documents...
       </div>
     );
@@ -33,7 +33,7 @@ export function DocumentList({ documents, onDelete, loading }: DocumentListProps
 
   if (documents.length === 0) {
     return (
-      <div style={{ padding: '20px', textAlign: 'center', color: '#999' }}>
+      <div className="py-5 text-center text-gray-400">
         No documents uploaded yet. Upload your first document above.
       </div>
     );
@@ -41,56 +41,28 @@ export function DocumentList({ documents, onDelete, loading }: DocumentListProps
 
   return (
     <div>
-      <div style={{
-        fontSize: '18px',
-        fontWeight: 600,
-        marginBottom: '16px',
-        color: '#333'
-      }}>
+      <div className="text-lg font-semibold mb-4 text-gray-800">
         Documents ({documents.length})
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <div className="flex flex-col gap-3">
         {documents.map((doc) => (
           <div
             key={doc.id}
-            style={{
-              padding: '16px',
-              backgroundColor: '#f9f9f9',
-              borderRadius: '8px',
-              border: '1px solid #e0e0e0',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
+            className="p-4 bg-gray-50 rounded-lg border border-gray-200 flex justify-between items-center"
           >
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: '16px', fontWeight: 600, marginBottom: '4px' }}>
+            <div>
+              <div className="text-base font-semibold mb-1">
                 {doc.filename}
               </div>
-              <div style={{ fontSize: '14px', color: '#666' }}>
+              <div className="text-sm text-gray-500">
                 {formatSize(doc.size)} • {formatDate(doc.upload_date)}
               </div>
             </div>
 
             <button
               onClick={() => handleDelete(doc.id, doc.filename)}
-              style={{
-                padding: '8px 16px',
-                backgroundColor: '#dc3545',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: 500,
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.backgroundColor = '#c82333';
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.backgroundColor = '#dc3545';
-              }}
+              className="px-4 py-2 bg-red-600 text-white rounded border-none cursor-pointer text-sm font-medium hover:bg-red-700"
             >
               Delete
             </button>

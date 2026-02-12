@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import clsx from 'clsx';
 import type { ChatMessage } from '../types/chat';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -12,51 +13,51 @@ interface MessageListProps {
 // Shared markdown component configuration
 const markdownComponents = {
   h2: ({ ...props }) => (
-    <h2 style={{ fontSize: '18px', fontWeight: 'bold', marginTop: '16px', marginBottom: '8px' }} {...props} />
+    <h2 className="text-lg font-bold mt-4 mb-2" {...props} />
   ),
   h3: ({ ...props }) => (
-    <h3 style={{ fontSize: '16px', fontWeight: 'bold', marginTop: '12px', marginBottom: '6px' }} {...props} />
+    <h3 className="text-base font-bold mt-3 mb-1.5" {...props} />
   ),
   p: ({ ...props }) => (
-    <p style={{ marginBottom: '8px', lineHeight: '1.6' }} {...props} />
+    <p className="mb-2 leading-relaxed" {...props} />
   ),
   ul: ({ ...props }) => (
-    <ul style={{ marginLeft: '20px', marginBottom: '8px' }} {...props} />
+    <ul className="ml-5 mb-2" {...props} />
   ),
   ol: ({ ...props }) => (
-    <ol style={{ marginLeft: '20px', marginBottom: '8px' }} {...props} />
+    <ol className="ml-5 mb-2" {...props} />
   ),
   li: ({ ...props }) => (
-    <li style={{ marginBottom: '4px' }} {...props} />
+    <li className="mb-1" {...props} />
   ),
   code: ({ inline, ...props }: React.HTMLAttributes<HTMLElement> & { inline?: boolean }) => (
     inline ? (
-      <code style={{ backgroundColor: '#f0f0f0', padding: '2px 4px', borderRadius: '3px', fontSize: '13px' }} {...props} />
+      <code className="bg-gray-100 px-1 py-0.5 rounded text-[13px]" {...props} />
     ) : (
-      <code style={{ display: 'block', backgroundColor: '#f0f0f0', padding: '8px', borderRadius: '4px', fontSize: '13px', overflowX: 'auto', whiteSpace: 'pre-wrap' }} {...props} />
+      <code className="block bg-gray-100 p-2 rounded text-[13px] overflow-x-auto whitespace-pre-wrap" {...props} />
     )
   ),
   strong: ({ ...props }) => (
-    <strong style={{ fontWeight: 'bold' }} {...props} />
+    <strong className="font-bold" {...props} />
   ),
   hr: ({ ...props }) => (
-    <hr style={{ border: 'none', borderTop: '1px solid #ddd', margin: '16px 0' }} {...props} />
+    <hr className="border-t border-gray-200 my-4" {...props} />
   ),
   table: ({ ...props }) => (
-    <table style={{ borderCollapse: 'collapse', width: '100%', marginBottom: '8px' }} {...props} />
+    <table className="border-collapse w-full mb-2" {...props} />
   ),
   th: ({ ...props }) => (
-    <th style={{ border: '1px solid #ddd', padding: '8px', backgroundColor: '#f5f5f5', textAlign: 'left' }} {...props} />
+    <th className="border border-gray-200 p-2 bg-gray-100 text-left" {...props} />
   ),
   td: ({ ...props }) => (
-    <td style={{ border: '1px solid #ddd', padding: '8px' }} {...props} />
+    <td className="border border-gray-200 p-2" {...props} />
   ),
   // Custom anchor handler to fix [Doc N] citation rendering
   a: ({ href, children, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { children?: React.ReactNode }) => {
     // If href is undefined/empty, this is likely a [Doc N] reference-style link
     // that react-markdown couldn't resolve. Render as plain text instead.
     if (!href) {
-      return <span style={{ fontWeight: 600, color: '#1a73e8' }}>[{children}]</span>;
+      return <span className="font-semibold text-blue-600">[{children}]</span>;
     }
     return <a href={href} {...props}>{children}</a>;
   }
@@ -82,45 +83,21 @@ export function MessageList({ messages, streamingContent, isLoading }: MessageLi
   return (
     <div
       ref={containerRef}
-      style={{
-        flex: 1,
-        overflowY: 'auto',
-        padding: '16px',
-        backgroundColor: '#f9f9f9',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '12px'
-      }}
+      className="flex-1 overflow-y-auto p-4 bg-gray-50 flex flex-col gap-3"
     >
       {messages.map((message, index) => (
         <div
           key={index}
-          style={{
-            alignSelf: message.role === 'user' ? 'flex-end' : 'flex-start',
-            maxWidth: '80%'
-          }}
+          className={clsx("max-w-[80%]", message.role === 'user' ? "self-end" : "self-start")}
         >
-          <div
-            style={{
-              fontSize: '12px',
-              fontWeight: 'bold',
-              marginBottom: '4px',
-              color: '#666'
-            }}
-          >
+          <div className="text-xs font-bold mb-1 text-gray-500">
             {message.role === 'user' ? 'You' : 'Assistant'}
           </div>
           <div
-            style={{
-              padding: '12px',
-              borderRadius: '8px',
-              backgroundColor: message.role === 'user' ? '#e3f2fd' : '#fff',
-              fontSize: '14px',
-              lineHeight: '1.5',
-              color: '#333',
-              whiteSpace: message.role === 'user' ? 'pre-wrap' : undefined,
-              wordBreak: 'break-word'
-            }}
+            className={clsx(
+              "p-3 rounded-lg text-sm leading-relaxed text-gray-800 break-words",
+              message.role === 'user' ? "bg-blue-50 whitespace-pre-wrap" : "bg-white"
+            )}
           >
             {message.role === 'user' ? (
               message.content
@@ -137,34 +114,15 @@ export function MessageList({ messages, streamingContent, isLoading }: MessageLi
       ))}
 
       {isLoading && (
-        <div
-          style={{
-            alignSelf: 'flex-start',
-            maxWidth: '80%'
-          }}
-        >
-          <div
-            style={{
-              fontSize: '12px',
-              fontWeight: 'bold',
-              marginBottom: '4px',
-              color: '#666'
-            }}
-          >
+        <div className="self-start max-w-[80%]">
+          <div className="text-xs font-bold mb-1 text-gray-500">
             Assistant
           </div>
           <div
-            style={{
-              padding: '12px',
-              borderRadius: '8px',
-              backgroundColor: '#fff',
-              fontSize: '14px',
-              lineHeight: '1.5',
-              color: streamingContent ? '#333' : '#666',
-              whiteSpace: streamingContent ? undefined : 'pre-wrap',
-              wordBreak: 'break-word',
-              fontStyle: streamingContent ? 'normal' : 'italic'
-            }}
+            className={clsx(
+              "p-3 rounded-lg text-sm leading-relaxed break-words",
+              streamingContent ? "text-gray-800 bg-white" : "text-gray-500 bg-white italic whitespace-pre-wrap"
+            )}
           >
             {streamingContent ? (
               <ReactMarkdown
