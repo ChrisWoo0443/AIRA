@@ -21,7 +21,7 @@ AIRA is a full-stack app that turns your documents into a searchable, chat-based
 
 - **Node.js** 18+
 - **Python** 3.11+
-- **Ollama** – [Install](https://ollama.ai) and pull a model, e.g. `ollama pull llama3:8b`
+- **Ollama** – [Install](https://ollama.ai) and pull a model
 - **npm** (or yarn/pnpm)
 
 ## Quick start
@@ -31,7 +31,7 @@ AIRA is a full-stack app that turns your documents into a searchable, chat-based
 Install Ollama and pull a model:
 
 ```bash
-ollama pull llama3:8b
+ollama pull qwen3:8b
 ```
 
 ### 2. Backend
@@ -69,7 +69,7 @@ When the backend is running, interactive docs: **http://localhost:8000/docs**
 | `/health` | GET | Health check |
 | `/api/ollama/status` | GET | Ollama connection and model list |
 | `/api/models` | GET | List available Ollama models |
-| `/api/model/select` | POST | Set the model used for chat (body: `{"model_name": "llama3:8b"}`) |
+| `/api/model/select` | POST | Set the model used for chat (body: `{"model_name": "qwen3:8b"}`) |
 | `/api/documents` | GET | List uploaded documents |
 | `/api/documents/upload` | POST | Upload a document (PDF, .txt, .md) |
 | `/api/documents/{id}` | DELETE | Delete a document and its vectors |
