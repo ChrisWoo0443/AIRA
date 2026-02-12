@@ -75,26 +75,30 @@ export function Sidebar({ children }: SidebarProps) {
       {/* Peek zone + floating sidebar (desktop only, when closed) */}
       {!isOpen && (
         <div
-          className="hidden md:block fixed top-0 left-0 z-50 h-full"
-          onMouseEnter={!isPeeking ? handlePeekZoneEnter : undefined}
+          className="hidden md:block fixed top-0 left-0 z-50 h-full pointer-events-none"
           onMouseLeave={handlePeekZoneLeave}
         >
-          {/* Invisible trigger strip when not peeking */}
-          {!isPeeking && (
-            <div className="w-3 h-full" />
-          )}
+          {/* Invisible trigger strip */}
+          <div
+            className="absolute top-0 left-0 w-3 h-full pointer-events-auto"
+            onMouseEnter={!isPeeking ? handlePeekZoneEnter : undefined}
+          />
 
-          {/* Floating sidebar when peeking */}
-          {isPeeking && (
-            <aside className="m-2 w-72 h-[calc(100%-16px)] bg-white rounded-xl shadow-2xl border border-gray-200">
-              <div className="h-full overflow-y-auto p-4 rounded-xl">
-                <h1 className="text-lg font-semibold text-gray-800 mb-4">
-                  Research Agent
-                </h1>
-                {children}
-              </div>
-            </aside>
-          )}
+          {/* Floating sidebar — always in DOM, slides in/out */}
+          <aside
+            className={clsx(
+              'm-2 w-72 h-[calc(100%-16px)] bg-white rounded-xl shadow-2xl border border-gray-200',
+              'transition-transform duration-300 ease-in-out',
+              isPeeking ? 'translate-x-0 pointer-events-auto' : '-translate-x-full pointer-events-none'
+            )}
+          >
+            <div className="h-full overflow-y-auto p-4 rounded-xl">
+              <h1 className="text-lg font-semibold text-gray-800 mb-4">
+                Research Agent
+              </h1>
+              {children}
+            </div>
+          </aside>
         </div>
       )}
     </>
