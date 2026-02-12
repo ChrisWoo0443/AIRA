@@ -117,7 +117,7 @@ export function Chat({ selectedModel }: ChatProps) {
   };
 
   return (
-    <div className="flex flex-col h-[600px] border border-gray-200 rounded-lg overflow-hidden bg-white">
+    <div className="flex flex-col h-full border border-gray-200 rounded-lg overflow-hidden bg-white">
       <div className="flex justify-between items-center p-4 border-b border-gray-200 bg-white">
         <h2 className="text-xl text-gray-800 m-0">Chat</h2>
         <button
