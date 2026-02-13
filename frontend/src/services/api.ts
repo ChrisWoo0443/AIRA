@@ -21,6 +21,54 @@ export async function uploadDocument(file: File): Promise<UploadResponse> {
   return response.json();
 }
 
+export function uploadDocumentWithProgress(
+  file: File,
+  onProgress: (percentage: number) => void,
+  abortSignal?: { abort: () => void }
+): Promise<UploadResponse> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+
+    // Expose abort capability
+    if (abortSignal) {
+      abortSignal.abort = () => xhr.abort();
+    }
+
+    xhr.upload.addEventListener('progress', (event) => {
+      if (event.lengthComputable) {
+        const percentage = Math.round((event.loaded / event.total) * 100);
+        onProgress(percentage);
+      }
+    });
+
+    xhr.addEventListener('load', () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          resolve(JSON.parse(xhr.responseText));
+        } catch {
+          reject(new Error('Invalid response from server'));
+        }
+      } else {
+        try {
+          const errorData = JSON.parse(xhr.responseText);
+          reject(new Error(errorData.detail || `Upload failed: ${xhr.statusText}`));
+        } catch {
+          reject(new Error(`Upload failed: ${xhr.statusText}`));
+        }
+      }
+    });
+
+    xhr.addEventListener('error', () => reject(new Error('Upload failed — network error')));
+    xhr.addEventListener('abort', () => reject(new Error('Upload cancelled')));
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    xhr.open('POST', '/api/documents/upload');
+    xhr.send(formData);
+  });
+}
+
 export async function fetchDocuments(): Promise<Document[]> {
   const response = await fetch(API_BASE);
 
