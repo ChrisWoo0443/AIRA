@@ -35,6 +35,15 @@ function App() {
     }
   }
 
+  const handleBulkDelete = async (ids: string[]) => {
+    try {
+      await api.bulkDeleteDocuments(ids)
+      await loadDocuments()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete documents')
+    }
+  }
+
   useEffect(() => {
     loadDocuments()
   }, [])
@@ -48,6 +57,7 @@ function App() {
           <DocumentList
             documents={documents}
             onDelete={handleDelete}
+            onBulkDelete={handleBulkDelete}
             loading={loading}
           />
         </>
@@ -59,7 +69,7 @@ function App() {
             <strong>Error:</strong> {error}
           </div>
         )}
-        <Chat selectedModel={selectedModel} />
+        <Chat selectedModel={selectedModel} documents={documents} />
       </div>
     </Layout>
   )

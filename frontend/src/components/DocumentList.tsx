@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { HiOutlineTrash } from 'react-icons/hi2';
 import clsx from 'clsx';
 import type { Document } from '../types/document';
@@ -7,14 +7,18 @@ import { FileTypeIcon } from './FileTypeIcon';
 interface DocumentListProps {
   documents: Document[];
   onDelete: (id: string) => void;
+  onBulkDelete?: (ids: string[]) => Promise<void>;
   loading: boolean;
 }
 
 type SortBy = 'name' | 'date' | 'size';
 
-export function DocumentList({ documents, onDelete, loading }: DocumentListProps) {
+export function DocumentList({ documents, onDelete, onBulkDelete, loading }: DocumentListProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortBy>('date');
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+  const selectAllRef = useRef<HTMLInputElement>(null);
 
   const formatSize = (bytes: number): string => {
     if (bytes < 1024) return `${bytes} B`;
@@ -58,6 +62,49 @@ export function DocumentList({ documents, onDelete, loading }: DocumentListProps
         return sorted;
     }
   }, [filteredDocuments, sortBy]);
+
+  // Clear selection when documents change (e.g., after delete)
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [documents]);
+
+  // Set indeterminate state on select-all checkbox
+  useEffect(() => {
+    if (selectAllRef.current) {
+      selectAllRef.current.indeterminate =
+        selectedIds.size > 0 && selectedIds.size < sortedDocuments.length;
+    }
+  }, [selectedIds, sortedDocuments.length]);
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === sortedDocuments.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(sortedDocuments.map(d => d.id)));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!onBulkDelete || selectedIds.size === 0) return;
+    const count = selectedIds.size;
+    if (!window.confirm(`Delete ${count} document${count > 1 ? 's' : ''}?`)) return;
+    setBulkDeleting(true);
+    try {
+      await onBulkDelete([...selectedIds]);
+      setSelectedIds(new Set());
+    } finally {
+      setBulkDeleting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -106,10 +153,35 @@ export function DocumentList({ documents, onDelete, loading }: DocumentListProps
         </div>
       </div>
 
+      {/* Select all + bulk action bar */}
+      <div className="flex items-center gap-2 px-2">
+        <input
+          ref={selectAllRef}
+          type="checkbox"
+          checked={selectedIds.size === sortedDocuments.length && sortedDocuments.length > 0}
+          onChange={toggleSelectAll}
+          className="w-3.5 h-3.5 rounded border-gray-300 cursor-pointer accent-blue-600"
+          aria-label="Select all documents"
+        />
+        <span className="text-xs text-gray-500">Select All</span>
+        {selectedIds.size > 0 && (
+          <div className="flex items-center gap-2 ml-auto">
+            <span className="text-xs text-gray-500">{selectedIds.size} selected</span>
+            <button
+              onClick={handleBulkDelete}
+              disabled={bulkDeleting}
+              className="text-xs text-red-600 hover:text-red-700 font-medium cursor-pointer disabled:opacity-50"
+            >
+              {bulkDeleting ? 'Deleting...' : 'Delete'}
+            </button>
+          </div>
+        )}
+      </div>
+
       {/* Document list */}
       {sortedDocuments.length === 0 ? (
         <div className="py-5 text-center text-gray-400">
-          No documents match '{searchQuery}'
+          No documents match &apos;{searchQuery}&apos;
         </div>
       ) : (
         <div className="space-y-1">
@@ -118,6 +190,14 @@ export function DocumentList({ documents, onDelete, loading }: DocumentListProps
               key={doc.id}
               className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-100 group transition-colors"
             >
+              <input
+                type="checkbox"
+                checked={selectedIds.has(doc.id)}
+                onChange={() => toggleSelect(doc.id)}
+                className="w-3.5 h-3.5 rounded border-gray-300 cursor-pointer accent-blue-600"
+                aria-label={`Select ${doc.filename}`}
+              />
+
               <FileTypeIcon filename={doc.filename} />
 
               <div className="text-sm truncate flex-1 min-w-0">
