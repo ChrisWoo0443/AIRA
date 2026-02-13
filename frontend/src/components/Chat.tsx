@@ -1,20 +1,24 @@
 import { useState, useEffect, useRef } from 'react';
 import clsx from 'clsx';
 import type { ChatMessage } from '../types/chat';
+import type { Document } from '../types/document';
 import { ChatInput } from './ChatInput';
 import { MessageList } from './MessageList';
+import { DocumentContextSelector } from './DocumentContextSelector';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import * as api from '../services/api';
 
 interface ChatProps {
   selectedModel?: string;
+  documents: Document[];
 }
 
-export function Chat({ selectedModel }: ChatProps) {
+export function Chat({ selectedModel, documents }: ChatProps) {
   const [sessionId, setSessionId, clearSessionId] = useLocalStorage<string | null>('research_agent_session_id', null);
   const [messages, setMessages, clearMessages] = useLocalStorage<ChatMessage[]>('research_agent_messages', []);
   const [isLoading, setIsLoading] = useState(false);
   const [streamingContent, setStreamingContent] = useState('');
+  const [selectedDocumentIds, setSelectedDocumentIds] = useState<Set<string>>(new Set());
 
   // Ref to track accumulated streaming content (avoids stale closure in onComplete)
   const streamingContentRef = useRef('');
@@ -37,6 +41,37 @@ export function Chat({ selectedModel }: ChatProps) {
     initSession();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const handleToggleDocument = (id: string) => {
+    setSelectedDocumentIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
+
+  const handleToggleAllDocuments = () => {
+    if (selectedDocumentIds.size === 0) {
+      // If none selected (all by default), select all explicitly
+      setSelectedDocumentIds(new Set(documents.map(doc => doc.id)));
+    } else {
+      // Clear selection (back to all by default)
+      setSelectedDocumentIds(new Set());
+    }
+  };
+
+  const handleDocumentMention = (id: string) => {
+    // Add document to selected context when mentioned with @
+    setSelectedDocumentIds(prev => {
+      const newSet = new Set(prev);
+      newSet.add(id);
+      return newSet;
+    });
+  };
+
   const handleSubmit = async (message: string) => {
     if (!message.trim() || !sessionId || isLoading) {
       return;
@@ -54,6 +89,9 @@ export function Chat({ selectedModel }: ChatProps) {
     setIsLoading(true);
     setStreamingContent('');
     streamingContentRef.current = '';
+
+    // Only pass document_ids if non-empty (empty = all documents by default)
+    const documentIds = selectedDocumentIds.size > 0 ? Array.from(selectedDocumentIds) : undefined;
 
     await api.sendChatMessage(
       message,
@@ -87,7 +125,8 @@ export function Chat({ selectedModel }: ChatProps) {
         streamingContentRef.current = '';
         setIsLoading(false);
       },
-      selectedModel
+      selectedModel,
+      documentIds
     );
   };
 
@@ -138,7 +177,22 @@ export function Chat({ selectedModel }: ChatProps) {
         isLoading={isLoading}
       />
 
-      <ChatInput onSubmit={handleSubmit} disabled={isLoading} />
+      <div className="flex gap-2 items-end p-3 border-t border-gray-200 bg-white">
+        <DocumentContextSelector
+          documents={documents}
+          selectedIds={selectedDocumentIds}
+          onToggle={handleToggleDocument}
+          onToggleAll={handleToggleAllDocuments}
+        />
+        <div className="flex-1">
+          <ChatInput
+            onSubmit={handleSubmit}
+            disabled={isLoading}
+            documents={documents}
+            onDocumentMention={handleDocumentMention}
+          />
+        </div>
+      </div>
     </div>
   );
 }

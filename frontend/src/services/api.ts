@@ -92,6 +92,19 @@ export async function deleteDocument(documentId: string): Promise<void> {
   }
 }
 
+export async function bulkDeleteDocuments(documentIds: string[]): Promise<void> {
+  // Delete documents sequentially to avoid overwhelming backend
+  // (backend has no bulk delete endpoint — call individual delete for each)
+  const results = await Promise.allSettled(
+    documentIds.map(id => deleteDocument(id))
+  );
+
+  const failures = results.filter(r => r.status === 'rejected');
+  if (failures.length > 0) {
+    throw new Error(`Failed to delete ${failures.length} of ${documentIds.length} documents`);
+  }
+}
+
 export async function createChatSession(): Promise<string> {
   const response = await fetch(`${CHAT_API_BASE}/session/new`, {
     method: 'POST',
@@ -124,7 +137,8 @@ export async function sendChatMessage(
   onChunk: (chunk: string) => void,
   onComplete: () => void,
   onError: (error: string) => void,
-  model?: string
+  model?: string,
+  documentIds?: string[]
 ): Promise<void> {
   try {
     const response = await fetch(`${CHAT_API_BASE}/message`, {
@@ -137,6 +151,7 @@ export async function sendChatMessage(
         session_id: sessionId,
         top_k: 5,
         model,
+        ...(documentIds && { document_ids: documentIds }),
       }),
     });
 
