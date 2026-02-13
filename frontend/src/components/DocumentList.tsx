@@ -1,4 +1,8 @@
+import { useState, useMemo } from 'react';
+import { HiOutlineTrash } from 'react-icons/hi2';
+import clsx from 'clsx';
 import type { Document } from '../types/document';
+import { FileTypeIcon } from './FileTypeIcon';
 
 interface DocumentListProps {
   documents: Document[];
@@ -6,7 +10,12 @@ interface DocumentListProps {
   loading: boolean;
 }
 
+type SortBy = 'name' | 'date' | 'size';
+
 export function DocumentList({ documents, onDelete, loading }: DocumentListProps) {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<SortBy>('date');
+
   const formatSize = (bytes: number): string => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -14,7 +23,8 @@ export function DocumentList({ documents, onDelete, loading }: DocumentListProps
   };
 
   const formatDate = (dateString: string): string => {
-    return new Date(dateString).toLocaleString();
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
   const handleDelete = (id: string, filename: string) => {
@@ -22,6 +32,32 @@ export function DocumentList({ documents, onDelete, loading }: DocumentListProps
       onDelete(id);
     }
   };
+
+  // Filter documents by search query
+  const filteredDocuments = useMemo(() => {
+    if (!searchQuery.trim()) return documents;
+    const query = searchQuery.toLowerCase();
+    return documents.filter(doc =>
+      doc.filename.toLowerCase().includes(query)
+    );
+  }, [documents, searchQuery]);
+
+  // Sort filtered documents
+  const sortedDocuments = useMemo(() => {
+    const sorted = [...filteredDocuments];
+    switch (sortBy) {
+      case 'name':
+        return sorted.sort((a, b) => a.filename.localeCompare(b.filename));
+      case 'date':
+        return sorted.sort((a, b) =>
+          new Date(b.upload_date).getTime() - new Date(a.upload_date).getTime()
+        );
+      case 'size':
+        return sorted.sort((a, b) => b.size - a.size);
+      default:
+        return sorted;
+    }
+  }, [filteredDocuments, sortBy]);
 
   if (loading) {
     return (
@@ -34,41 +70,82 @@ export function DocumentList({ documents, onDelete, loading }: DocumentListProps
   if (documents.length === 0) {
     return (
       <div className="py-5 text-center text-gray-400">
-        No documents uploaded yet. Upload your first document above.
+        No documents uploaded yet.
       </div>
     );
   }
 
   return (
-    <div>
-      <div className="text-lg font-semibold mb-4 text-gray-800">
-        Documents ({documents.length})
+    <div className="space-y-3">
+      {/* Header section with search and sort */}
+      <div className="space-y-2">
+        <input
+          type="text"
+          placeholder="Search documents..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full text-sm border border-gray-200 rounded py-1.5 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+
+        <div className="flex items-center justify-between">
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as SortBy)}
+            className="text-xs bg-white border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="date">Date (Newest)</option>
+            <option value="name">Name (A-Z)</option>
+            <option value="size">Size (Largest)</option>
+          </select>
+
+          <div className="text-xs text-gray-500">
+            {filteredDocuments.length === documents.length
+              ? `${documents.length} documents`
+              : `${filteredDocuments.length} of ${documents.length}`}
+          </div>
+        </div>
       </div>
 
-      <div className="flex flex-col gap-3">
-        {documents.map((doc) => (
-          <div
-            key={doc.id}
-            className="p-4 bg-gray-50 rounded-lg border border-gray-200 flex justify-between items-center"
-          >
-            <div>
-              <div className="text-base font-semibold mb-1">
+      {/* Document list */}
+      {sortedDocuments.length === 0 ? (
+        <div className="py-5 text-center text-gray-400">
+          No documents match '{searchQuery}'
+        </div>
+      ) : (
+        <div className="space-y-1">
+          {sortedDocuments.map((doc) => (
+            <div
+              key={doc.id}
+              className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-100 group transition-colors"
+            >
+              <FileTypeIcon filename={doc.filename} />
+
+              <div className="text-sm truncate flex-1 min-w-0">
                 {doc.filename}
               </div>
-              <div className="text-sm text-gray-500">
-                {formatSize(doc.size)} • {formatDate(doc.upload_date)}
-              </div>
-            </div>
 
-            <button
-              onClick={() => handleDelete(doc.id, doc.filename)}
-              className="px-4 py-2 bg-red-600 text-white rounded border-none cursor-pointer text-sm font-medium hover:bg-red-700"
-            >
-              Delete
-            </button>
-          </div>
-        ))}
-      </div>
+              <div className="text-xs text-gray-400 whitespace-nowrap">
+                {formatSize(doc.size)}
+              </div>
+
+              <div className="text-xs text-gray-400 whitespace-nowrap">
+                {formatDate(doc.upload_date)}
+              </div>
+
+              <button
+                onClick={() => handleDelete(doc.id, doc.filename)}
+                className={clsx(
+                  'p-1 text-gray-400 hover:text-red-500 transition-all',
+                  'opacity-0 group-hover:opacity-100'
+                )}
+                aria-label={`Delete ${doc.filename}`}
+              >
+                <HiOutlineTrash className="w-4 h-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
