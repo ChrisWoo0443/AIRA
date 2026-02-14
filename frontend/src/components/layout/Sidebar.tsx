@@ -93,7 +93,7 @@ export function Sidebar({ children }: SidebarProps) {
           !isOpen && 'md:rounded-xl'
         )}>
           <h1 className="text-lg font-semibold text-gray-800 mb-4">
-            Research Agent
+            Research Assistant
           </h1>
           {children}
         </div>
