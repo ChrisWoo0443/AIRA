@@ -30,6 +30,7 @@ class ChatRequest(BaseModel):
     session_id: str
     top_k: int = 5
     model: Optional[str] = None
+    document_ids: Optional[list[str]] = None
 
 
 class NewSessionResponse(BaseModel):
@@ -135,6 +136,7 @@ async def chat_message(request: ChatRequest, db: DBSession = Depends(get_db)):
                 conversation_history=conversation_history,
                 top_k=request.top_k,
                 model=request.model,
+                document_ids=request.document_ids,
             ):
                 accumulated_response += chunk
 

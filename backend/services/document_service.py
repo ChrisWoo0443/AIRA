@@ -1,4 +1,5 @@
 import json
+import asyncio
 import aiofiles
 from pathlib import Path
 from typing import Optional
@@ -13,6 +14,9 @@ METADATA_FILE = Path("uploads/metadata.json")
 # Create directories on import
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 TEXT_DIR.mkdir(parents=True, exist_ok=True)
+
+# Lock to serialize metadata read-modify-write operations
+_metadata_lock = asyncio.Lock()
 
 
 async def load_metadata() -> dict:
@@ -43,28 +47,27 @@ async def save_document(
     extraction_status: str
 ) -> dict:
     """Save document metadata and extracted text"""
-    # Save extracted text
+    # Save extracted text (safe outside lock — unique file per doc)
     text_file_path = TEXT_DIR / f"{doc_id}.txt"
     async with aiofiles.open(text_file_path, mode='w', encoding='utf-8') as f:
         await f.write(text_content)
 
-    # Load existing metadata
-    metadata = await load_metadata()
+    # Serialize metadata read-modify-write to prevent concurrent clobber
+    async with _metadata_lock:
+        metadata = await load_metadata()
 
-    # Add new document entry
-    upload_date = datetime.utcnow().isoformat() + "Z"
-    metadata[doc_id] = {
-        "id": doc_id,
-        "filename": filename,
-        "size": size,
-        "upload_date": upload_date,
-        "file_path": file_path,
-        "text_path": str(text_file_path),
-        "extraction_status": extraction_status
-    }
+        upload_date = datetime.utcnow().isoformat() + "Z"
+        metadata[doc_id] = {
+            "id": doc_id,
+            "filename": filename,
+            "size": size,
+            "upload_date": upload_date,
+            "file_path": file_path,
+            "text_path": str(text_file_path),
+            "extraction_status": extraction_status
+        }
 
-    # Save metadata
-    await save_metadata(metadata)
+        await save_metadata(metadata)
 
     return metadata[doc_id]
 
@@ -85,25 +88,26 @@ async def get_document(doc_id: str) -> Optional[dict]:
 
 async def delete_document(doc_id: str) -> bool:
     """Delete document and its metadata"""
-    metadata = await load_metadata()
+    async with _metadata_lock:
+        metadata = await load_metadata()
 
-    if doc_id not in metadata:
-        return False
+        if doc_id not in metadata:
+            return False
 
-    doc = metadata[doc_id]
+        doc = metadata[doc_id]
 
-    # Delete file from disk
-    file_path = Path(doc["file_path"])
-    if file_path.exists():
-        file_path.unlink()
+        # Delete file from disk
+        file_path = Path(doc["file_path"])
+        if file_path.exists():
+            file_path.unlink()
 
-    # Delete text file from disk
-    text_path = Path(doc["text_path"])
-    if text_path.exists():
-        text_path.unlink()
+        # Delete text file from disk
+        text_path = Path(doc["text_path"])
+        if text_path.exists():
+            text_path.unlink()
 
-    # Remove from metadata
-    del metadata[doc_id]
-    await save_metadata(metadata)
+        # Remove from metadata
+        del metadata[doc_id]
+        await save_metadata(metadata)
 
     return True

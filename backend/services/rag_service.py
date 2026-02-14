@@ -56,6 +56,7 @@ async def generate_rag_response(
     conversation_history: list[dict],
     top_k: int = 5,
     model: Optional[str] = None,
+    document_ids: Optional[list[str]] = None,
 ) -> AsyncGenerator[str, None]:
     """
     Generate a streaming RAG response by retrieving relevant chunks and calling LLM.
@@ -64,6 +65,8 @@ async def generate_rag_response(
         query: User's question/query text
         conversation_history: List of previous message dicts (role, content)
         top_k: Number of document chunks to retrieve (default: 5)
+        model: Optional model name override
+        document_ids: Optional list of document IDs to filter search results
 
     Yields:
         str: Response content chunks from LLM
@@ -73,7 +76,7 @@ async def generate_rag_response(
         instead of calling the LLM.
     """
     # Retrieve relevant document chunks
-    search_results = search_documents(query, top_k=top_k)
+    search_results = search_documents(query, top_k=top_k, doc_ids=document_ids)
 
     # Handle case where no documents are found
     if not search_results:
