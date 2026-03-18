@@ -8,7 +8,8 @@ import json
 from typing import Optional
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, field_validator
+from starlette.requests import Request
 from sqlalchemy.orm import Session as DBSession
 from services.rag_service import generate_rag_response
 from services.session_service import (
@@ -18,6 +19,8 @@ from services.session_service import (
     delete_session as delete_session_db,
     get_db,
 )
+from rate_limiter import limiter
+from validators import validate_model_name as _validate_model_name, validate_uuid
 
 
 router = APIRouter(prefix="/chat", tags=["chat"])
@@ -26,11 +29,31 @@ router = APIRouter(prefix="/chat", tags=["chat"])
 class ChatRequest(BaseModel):
     """Request body for chat message endpoint"""
 
-    message: str
+    message: str = Field(..., min_length=1, max_length=10_000)
     session_id: str
-    top_k: int = 5
-    model: Optional[str] = None
-    document_ids: Optional[list[str]] = None
+    top_k: int = Field(5, ge=1, le=20)
+    model: Optional[str] = Field(None, max_length=100)
+    document_ids: Optional[list[str]] = Field(None, max_length=50)
+
+    @field_validator("session_id")
+    @classmethod
+    def check_session_id(cls, v):
+        return validate_uuid(v)
+
+    @field_validator("model")
+    @classmethod
+    def check_model_name(cls, v):
+        if v is not None:
+            return _validate_model_name(v)
+        return v
+
+    @field_validator("document_ids")
+    @classmethod
+    def check_document_ids(cls, v):
+        if v is not None:
+            for doc_id in v:
+                validate_uuid(doc_id)
+        return v
 
 
 class NewSessionResponse(BaseModel):
@@ -49,7 +72,8 @@ class SessionResponse(BaseModel):
 
 
 @router.post("/session/new", response_model=NewSessionResponse)
-async def create_session_endpoint(db: DBSession = Depends(get_db)):
+@limiter.limit("120/minute")
+async def create_session_endpoint(request: Request, db: DBSession = Depends(get_db)):
     """
     Create a new chat session.
 
@@ -64,7 +88,8 @@ async def create_session_endpoint(db: DBSession = Depends(get_db)):
 
 
 @router.get("/session/{session_id}", response_model=SessionResponse)
-async def get_session_endpoint(session_id: str, db: DBSession = Depends(get_db)):
+@limiter.limit("120/minute")
+async def get_session_endpoint(request: Request, session_id: str, db: DBSession = Depends(get_db)):
     """
     Retrieve a chat session by ID.
 
@@ -91,7 +116,8 @@ async def get_session_endpoint(session_id: str, db: DBSession = Depends(get_db))
 
 
 @router.delete("/session/{session_id}")
-async def delete_session_endpoint(session_id: str, db: DBSession = Depends(get_db)):
+@limiter.limit("120/minute")
+async def delete_session_endpoint(request: Request, session_id: str, db: DBSession = Depends(get_db)):
     """
     Delete a chat session and clear its history.
 
@@ -110,7 +136,8 @@ async def delete_session_endpoint(session_id: str, db: DBSession = Depends(get_d
 
 
 @router.post("/message")
-async def chat_message(request: ChatRequest, db: DBSession = Depends(get_db)):
+@limiter.limit("30/minute")
+async def chat_message(request: Request, chat_req: ChatRequest, db: DBSession = Depends(get_db)):
     """
     Send a chat message and receive streaming SSE response.
 
@@ -122,7 +149,7 @@ async def chat_message(request: ChatRequest, db: DBSession = Depends(get_db)):
         StreamingResponse: Server-Sent Events stream of response chunks
     """
     # Get session from database (or auto-create via frontend-authoritative pattern)
-    session = get_session_db(db, request.session_id)
+    session = get_session_db(db, chat_req.session_id)
     conversation_history = session.messages if session else []
 
     async def event_generator():
@@ -132,11 +159,11 @@ async def chat_message(request: ChatRequest, db: DBSession = Depends(get_db)):
         try:
             # Stream RAG response
             async for chunk in generate_rag_response(
-                query=request.message,
+                query=chat_req.message,
                 conversation_history=conversation_history,
-                top_k=request.top_k,
-                model=request.model,
-                document_ids=request.document_ids,
+                top_k=chat_req.top_k,
+                model=chat_req.model,
+                document_ids=chat_req.document_ids,
             ):
                 accumulated_response += chunk
 
@@ -145,11 +172,11 @@ async def chat_message(request: ChatRequest, db: DBSession = Depends(get_db)):
 
             # After streaming completes, update session in database
             updated_messages = conversation_history + [
-                {"role": "user", "content": request.message},
+                {"role": "user", "content": chat_req.message},
                 {"role": "assistant", "content": accumulated_response},
             ]
 
-            update_session_messages(db, request.session_id, updated_messages)
+            update_session_messages(db, chat_req.session_id, updated_messages)
 
             # Send completion signal
             yield f"data: {json.dumps({'done': True})}\n\n"

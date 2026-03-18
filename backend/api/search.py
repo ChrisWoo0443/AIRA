@@ -4,18 +4,23 @@ Search API endpoint for semantic document retrieval.
 Provides GET /search endpoint for querying documents using semantic similarity.
 """
 
+from uuid import UUID
 from fastapi import APIRouter, HTTPException, Query
+from starlette.requests import Request
 from models.search import SearchResult, SearchResponse
 from services.retrieval_service import search_documents
+from rate_limiter import limiter
 
 router = APIRouter()
 
 
 @router.get("/search", response_model=SearchResponse)
+@limiter.limit("60/minute")
 async def search(
-    q: str = Query(..., description="Search query text"),
+    request: Request,
+    q: str = Query(..., min_length=1, max_length=1000, description="Search query text"),
     top_k: int = Query(5, ge=1, le=20, description="Maximum results to return"),
-    doc_ids: str = Query(None, description="Comma-separated document IDs to filter")
+    doc_ids: str = Query(None, description="Comma-separated document IDs to filter"),
 ):
     """
     Search for relevant document chunks using semantic similarity.
@@ -36,6 +41,14 @@ async def search(
     parsed_doc_ids = None
     if doc_ids:
         parsed_doc_ids = [doc_id.strip() for doc_id in doc_ids.split(',') if doc_id.strip()]
+        # Validate each doc_id as UUID
+        for did in parsed_doc_ids:
+            try:
+                UUID(did)
+            except ValueError:
+                raise HTTPException(
+                    status_code=422, detail=f"Invalid document ID format: {did}"
+                )
 
     # Execute search
     try:

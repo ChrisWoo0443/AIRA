@@ -1,12 +1,23 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, field_validator
+from starlette.requests import Request
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 from ollama_client import check_ollama_status, test_completion
+from rate_limiter import limiter
+from validators import validate_model_name as _validate_model_name
 from api.documents import router as documents_router
 from api.search import router as search_router
 from api.chat import router as chat_router
 
 app = FastAPI(title="Research Agent API")
+
+# Configure rate limiter
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
 
 # Configure CORS for React frontend (Vite default port)
 app.add_middleware(
@@ -26,11 +37,17 @@ app.include_router(chat_router, prefix="/api")
 class ModelSelection(BaseModel):
     """Request body for model selection"""
 
-    model_name: str
+    model_name: str = Field(..., min_length=1, max_length=100)
+
+    @field_validator("model_name")
+    @classmethod
+    def check_model_name(cls, v):
+        return _validate_model_name(v)
 
 
 @app.post("/api/model/select")
-async def select_model(request: ModelSelection):
+@limiter.limit("20/minute")
+async def select_model(request: Request, body: ModelSelection):
     """
     Select the model to use for completions.
 
@@ -45,26 +62,27 @@ async def select_model(request: ModelSelection):
         import ollama
 
         # Try to show the model details to verify it exists
-        ollama.show(request.model_name)
+        ollama.show(body.model_name)
     except Exception:
         raise HTTPException(
-            status_code=400, detail=f"Model '{request.model_name}' not found in Ollama"
+            status_code=400, detail=f"Model '{body.model_name}' not found in Ollama"
         )
 
     # Store the selected model globally
     from ollama_client import set_selected_model
 
-    set_selected_model(request.model_name)
+    set_selected_model(body.model_name)
 
     return {
         "status": "success",
-        "model": request.model_name,
-        "message": f"Model '{request.model_name}' selected successfully",
+        "model": body.model_name,
+        "message": f"Model '{body.model_name}' selected successfully",
     }
 
 
 @app.get("/api/models")
-async def list_models():
+@limiter.limit("120/minute")
+async def list_models(request: Request):
     """
     List available models in Ollama.
 
@@ -102,7 +120,8 @@ async def health_check():
 
 
 @app.get("/api/ollama/status")
-async def ollama_status():
+@limiter.limit("120/minute")
+async def ollama_status(request: Request):
     """Check Ollama service status and run test completion"""
     # Check Ollama connection and list models
     status_info = check_ollama_status()

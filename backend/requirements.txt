@@ -7,3 +7,4 @@ PyMuPDF>=1.23.0
 sqlalchemy>=2.0.0
 langchain-text-splitters>=0.2.0
 chromadb>=0.4.0
+slowapi>=0.1.9
