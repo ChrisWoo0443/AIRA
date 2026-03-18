@@ -3,10 +3,13 @@ import os
 import logging
 from pathlib import Path
 from fastapi import APIRouter, UploadFile, HTTPException
+from starlette.requests import Request
 import aiofiles
 
 from models.document import DocumentResponse, UploadResponse
 from services.file_validator import validate_file_extension, validate_file_type_magic, MAX_FILE_SIZE
+from rate_limiter import limiter
+from validators import validate_uuid
 from services.text_extractor import extract_text
 from services.document_service import (
     save_document,
@@ -25,7 +28,8 @@ router = APIRouter()
 
 
 @router.post("/documents/upload", response_model=UploadResponse)
-async def upload_document(file: UploadFile):
+@limiter.limit("10/minute")
+async def upload_document(request: Request, file: UploadFile):
     """Upload a document (PDF, text, or markdown)"""
     # Validate extension
     if not validate_file_extension(file.filename):
@@ -114,7 +118,8 @@ async def upload_document(file: UploadFile):
 
 
 @router.get("/documents")
-async def get_documents():
+@limiter.limit("120/minute")
+async def get_documents(request: Request):
     """List all uploaded documents"""
     docs = await list_documents()
 
@@ -133,8 +138,15 @@ async def get_documents():
 
 
 @router.delete("/documents/{doc_id}")
-async def delete_document_endpoint(doc_id: str):
+@limiter.limit("120/minute")
+async def delete_document_endpoint(request: Request, doc_id: str):
     """Delete a document by ID"""
+    # Validate doc_id format
+    try:
+        validate_uuid(doc_id)
+    except ValueError:
+        raise HTTPException(status_code=422, detail=f"Invalid document ID format: {doc_id}")
+
     # Clean up vectors first
     try:
         delete_document_vectors(doc_id)
