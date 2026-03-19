@@ -1,106 +1,185 @@
-import { useState, useEffect } from 'react';
-import clsx from 'clsx';
-import * as api from '../services/api';
+import { useState, useEffect, useRef } from 'react'
+import { ChevronDown, Check } from 'lucide-react'
+import { listModels, selectModel } from '../services/api'
 
 interface ModelSelectorProps {
-  onModelChange?: (model: string) => void;
+  onModelChange?: (model: string) => void
 }
 
-export function ModelSelector({ onModelChange }: ModelSelectorProps) {
-  const [models, setModels] = useState<string[]>([]);
-  const [selectedModel, setSelectedModel] = useState<string>('');
-  const [loading, setLoading] = useState(true);
-  const [selecting, setSelecting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+export default function ModelSelector({ onModelChange }: ModelSelectorProps) {
+  const [models, setModels] = useState<string[]>([])
+  const [selectedModel, setSelectedModel] = useState<string>('')
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [isOpen, setIsOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const fetchModels = async () => {
       try {
-        setLoading(true);
-        setError(null);
-        const availableModels = await api.listModels();
-        setModels(availableModels);
+        setLoading(true)
+        setError(null)
+        const availableModels = await listModels()
+        setModels(availableModels)
 
-        // Set initial selection (prefer llama3 if available)
-        const preferredModel = availableModels.find(m => m.includes('llama3')) ||
-                              availableModels.find(m => m.includes('llama')) ||
-                              availableModels[0];
+        const preferredModel =
+          availableModels.find(m => m.includes('llama3')) ||
+          availableModels.find(m => m.includes('llama')) ||
+          availableModels[0]
+
         if (preferredModel) {
-          setSelectedModel(preferredModel);
-          if (onModelChange) {
-            onModelChange(preferredModel);
-          }
+          setSelectedModel(preferredModel)
+          onModelChange?.(preferredModel)
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load models');
+        setError(err instanceof Error ? err.message : 'Failed to load models')
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
-
-    fetchModels();
-  }, []);
-
-  const handleSelectModel = async (modelName: string) => {
-    try {
-      setSelecting(true);
-      setError(null);
-      await api.selectModel(modelName);
-      setSelectedModel(modelName);
-      if (onModelChange) {
-        onModelChange(modelName);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to select model');
-    } finally {
-      setSelecting(false);
     }
-  };
+
+    fetchModels()
+  }, [])
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const handleSelect = async (modelName: string) => {
+    try {
+      setError(null)
+      await selectModel(modelName)
+      setSelectedModel(modelName)
+      setIsOpen(false)
+      onModelChange?.(modelName)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to select model')
+    }
+  }
 
   if (loading) {
     return (
-      <div className="p-4 text-center">
-        Loading models...
+      <div
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 6,
+          padding: '4px 12px',
+          backgroundColor: 'var(--color-bg-elevated)',
+          border: '1px solid var(--color-border)',
+          borderRadius: 999,
+          fontSize: 11,
+          color: 'var(--color-text-tertiary)',
+        }}
+      >
+        Loading...
       </div>
-    );
+    )
+  }
+
+  if (error || models.length === 0) {
+    return (
+      <div
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 6,
+          padding: '4px 12px',
+          backgroundColor: 'var(--color-bg-elevated)',
+          border: '1px solid var(--color-border)',
+          borderRadius: 999,
+          fontSize: 11,
+          color: 'var(--color-status-error)',
+        }}
+      >
+        {error || 'No models available'}
+      </div>
+    )
   }
 
   return (
-    <div className="p-4 mb-4">
-      <div className="flex items-center gap-4">
-        <label htmlFor="model-select" className="font-medium text-gray-800">
-          AI Model:
-        </label>
-        <select
-          id="model-select"
-          value={selectedModel}
-          onChange={(e) => handleSelectModel(e.target.value)}
-          disabled={selecting || models.length === 0}
-          className={clsx(
-            "px-3 py-2 text-sm font-sans border border-gray-200 rounded",
-            selecting ? "bg-gray-100 cursor-not-allowed" : "bg-white cursor-pointer"
-          )}
-        >
-          {models.map((model) => (
-            <option key={model} value={model}>
-              {model}
-            </option>
-          ))}
-        </select>
-        {selecting && (
-          <span className="text-sm text-gray-500">Selecting...</span>
-        )}
-      </div>
+    <div ref={dropdownRef} style={{ position: 'relative', display: 'inline-block' }}>
+      <button
+        onClick={() => setIsOpen(prev => !prev)}
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 6,
+          padding: '4px 12px',
+          backgroundColor: 'var(--color-bg-elevated)',
+          border: '1px solid var(--color-border)',
+          borderRadius: 999,
+          fontSize: 11,
+          color: 'var(--color-text-primary)',
+          cursor: 'pointer',
+          lineHeight: 1.4,
+        }}
+        onMouseEnter={e => {
+          e.currentTarget.style.backgroundColor = 'var(--color-bg-hover)'
+        }}
+        onMouseLeave={e => {
+          e.currentTarget.style.backgroundColor = 'var(--color-bg-elevated)'
+        }}
+      >
+        {selectedModel}
+        <ChevronDown size={12} />
+      </button>
 
-      {error && (
-        <div className="mt-2 p-2 bg-red-50 text-red-700 rounded text-sm">
-          <strong>Error:</strong> {error}
-        </div>
-      )}
-
-      <div className="mt-2 text-xs text-gray-500 italic">
-        Current model: {selectedModel || 'None selected'}
+      <div
+        style={{
+          position: 'absolute',
+          top: '100%',
+          right: 0,
+          marginTop: 4,
+          backgroundColor: 'var(--color-bg-elevated)',
+          border: '1px solid var(--color-border)',
+          borderRadius: 8,
+          boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+          zIndex: 40,
+          minWidth: 160,
+          overflow: 'hidden',
+          visibility: isOpen ? 'visible' : 'hidden',
+          opacity: isOpen ? 1 : 0,
+        }}
+      >
+        {models.map(model => {
+          const isActive = model === selectedModel
+          return (
+            <div
+              key={model}
+              onClick={() => handleSelect(model)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '10px 14px',
+                fontSize: 11,
+                cursor: 'pointer',
+                color: isActive ? 'var(--color-accent)' : 'var(--color-text-primary)',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.backgroundColor = 'var(--color-bg-hover)'
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.backgroundColor = 'transparent'
+              }}
+            >
+              <span>{model}</span>
+              {isActive && <Check size={12} />}
+            </div>
+          )
+        })}
       </div>
     </div>
-  );
+  )
 }
