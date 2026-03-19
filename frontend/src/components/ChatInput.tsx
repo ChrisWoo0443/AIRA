@@ -1,8 +1,8 @@
-import { useState, useRef, useEffect } from 'react';
-import clsx from 'clsx';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import type { FormEvent, KeyboardEvent, ChangeEvent } from 'react';
 import type { Document } from '../types/document';
-import { FileTypeIcon } from './FileTypeIcon';
+import { ArrowUp } from 'lucide-react';
+import FileTypeBadge from './FileTypeBadge';
 
 interface ChatInputProps {
   onSubmit: (message: string) => void;
@@ -17,29 +17,32 @@ export function ChatInput({ onSubmit, disabled, documents = [], onDocumentMentio
   const [mentionQuery, setMentionQuery] = useState('');
   const [mentionStartPos, setMentionStartPos] = useState(-1);
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const autocompleteRef = useRef<HTMLDivElement>(null);
 
-  // Filter documents based on mention query
   const filteredDocuments = mentionQuery
     ? documents.filter(doc =>
         doc.filename.toLowerCase().includes(mentionQuery.toLowerCase())
       )
     : documents;
 
-  // Detect @ mention
-  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const autoGrow = useCallback(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    textarea.style.height = 'auto';
+    textarea.style.height = Math.min(textarea.scrollHeight, 200) + 'px';
+  }, []);
+
+  const handleInputChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
     const cursorPos = e.target.selectionStart || 0;
 
     setInput(value);
 
-    // Find the last @ before cursor
     const textBeforeCursor = value.substring(0, cursorPos);
     const lastAtIndex = textBeforeCursor.lastIndexOf('@');
 
     if (lastAtIndex !== -1) {
-      // Check if there's no space between @ and cursor (valid mention)
       const textAfterAt = textBeforeCursor.substring(lastAtIndex + 1);
       if (!textAfterAt.includes(' ')) {
         setMentionQuery(textAfterAt);
@@ -50,17 +53,14 @@ export function ChatInput({ onSubmit, disabled, documents = [], onDocumentMentio
       }
     }
 
-    // Hide autocomplete if no valid mention
     setShowAutocomplete(false);
     setMentionQuery('');
     setMentionStartPos(-1);
   };
 
-  // Handle document selection from autocomplete
-  const handleSelectDocument = (doc: Document) => {
+  const handleSelectDocument = useCallback((doc: Document) => {
     if (mentionStartPos === -1) return;
 
-    // Replace @query with @filename
     const beforeMention = input.substring(0, mentionStartPos);
     const afterMention = input.substring(mentionStartPos + mentionQuery.length + 1);
     const newInput = `${beforeMention}@${doc.filename}${afterMention}`;
@@ -70,54 +70,77 @@ export function ChatInput({ onSubmit, disabled, documents = [], onDocumentMentio
     setMentionQuery('');
     setMentionStartPos(-1);
 
-    // Call the mention callback to add document to context
     onDocumentMention?.(doc.id);
 
-    // Focus back to input
-    inputRef.current?.focus();
-  };
+    textareaRef.current?.focus();
+  }, [input, mentionStartPos, mentionQuery, onDocumentMention]);
 
-  // Keyboard navigation for autocomplete
-  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (!showAutocomplete || filteredDocuments.length === 0) return;
+  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (showAutocomplete && filteredDocuments.length > 0) {
+      switch (e.key) {
+        case 'ArrowDown':
+          e.preventDefault();
+          setSelectedIndex(prev =>
+            prev < filteredDocuments.length - 1 ? prev + 1 : prev
+          );
+          return;
 
-    switch (e.key) {
-      case 'ArrowDown':
-        e.preventDefault();
-        setSelectedIndex(prev =>
-          prev < filteredDocuments.length - 1 ? prev + 1 : prev
-        );
-        break;
+        case 'ArrowUp':
+          e.preventDefault();
+          setSelectedIndex(prev => (prev > 0 ? prev - 1 : 0));
+          return;
 
-      case 'ArrowUp':
-        e.preventDefault();
-        setSelectedIndex(prev => (prev > 0 ? prev - 1 : 0));
-        break;
-
-      case 'Enter':
-        if (showAutocomplete) {
+        case 'Enter':
           e.preventDefault();
           handleSelectDocument(filteredDocuments[selectedIndex]);
-        }
-        break;
+          return;
 
-      case 'Escape':
-        e.preventDefault();
-        setShowAutocomplete(false);
-        setMentionQuery('');
-        setMentionStartPos(-1);
-        break;
+        case 'Escape':
+          e.preventDefault();
+          setShowAutocomplete(false);
+          setMentionQuery('');
+          setMentionStartPos(-1);
+          return;
+      }
+    }
+
+    if (e.key === 'Enter' && e.shiftKey) {
+      // Allow default behavior (newline insertion)
+      return;
+    }
+
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      submitMessage();
     }
   };
 
-  // Click outside to close autocomplete
+  const submitMessage = () => {
+    if (input.trim() && !disabled) {
+      onSubmit(input.trim());
+      setInput('');
+      setShowAutocomplete(false);
+      setMentionQuery('');
+      setMentionStartPos(-1);
+    }
+  };
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    submitMessage();
+  };
+
+  useEffect(() => {
+    autoGrow();
+  }, [input, autoGrow]);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
         autocompleteRef.current &&
         !autocompleteRef.current.contains(event.target as Node) &&
-        inputRef.current &&
-        !inputRef.current.contains(event.target as Node)
+        textareaRef.current &&
+        !textareaRef.current.contains(event.target as Node)
       ) {
         setShowAutocomplete(false);
       }
@@ -132,72 +155,127 @@ export function ChatInput({ onSubmit, disabled, documents = [], onDocumentMentio
     };
   }, [showAutocomplete]);
 
-  const handleSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    if (input.trim() && !disabled) {
-      onSubmit(input.trim());
-      setInput('');
-      setShowAutocomplete(false);
-      setMentionQuery('');
-      setMentionStartPos(-1);
-    }
-  };
-
   return (
-    <div className="relative w-full">
-      {/* Autocomplete dropdown */}
-      {showAutocomplete && filteredDocuments.length > 0 && (
-        <div
-          ref={autocompleteRef}
-          className="absolute bottom-full left-0 mb-1 w-full max-w-sm bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto z-20"
-        >
-          {filteredDocuments.map((doc, index) => (
-            <button
-              key={doc.id}
-              type="button"
-              onClick={() => handleSelectDocument(doc)}
-              className={clsx(
-                'w-full flex items-center gap-2 px-3 py-2 text-left text-sm transition-colors',
-                index === selectedIndex
-                  ? 'bg-blue-50 text-gray-900'
-                  : 'text-gray-800 hover:bg-gray-100'
-              )}
-            >
-              <FileTypeIcon filename={doc.filename} className="flex-shrink-0" />
-              <span className="flex-1 truncate">{doc.filename}</span>
-            </button>
-          ))}
-        </div>
-      )}
+    <div style={{ padding: '12px 24px 16px' }}>
+      <div style={{ position: 'relative', width: '100%' }}>
+        {/* Autocomplete dropdown */}
+        {showAutocomplete && filteredDocuments.length > 0 && (
+          <div
+            ref={autocompleteRef}
+            style={{
+              position: 'absolute',
+              bottom: '100%',
+              left: 0,
+              width: '100%',
+              maxWidth: 384,
+              maxHeight: 240,
+              overflowY: 'auto',
+              background: 'var(--color-bg-elevated)',
+              borderRadius: 8,
+              boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+              zIndex: 40,
+              marginBottom: 4,
+            }}
+          >
+            {filteredDocuments.map((doc, index) => (
+              <button
+                key={doc.id}
+                type="button"
+                onClick={() => handleSelectDocument(doc)}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  padding: '8px 12px',
+                  textAlign: 'left',
+                  fontSize: 13,
+                  border: 'none',
+                  cursor: 'pointer',
+                  background: index === selectedIndex
+                    ? 'rgba(91,138,245,0.1)'
+                    : 'transparent',
+                  borderLeft: index === selectedIndex
+                    ? '2px solid var(--color-accent)'
+                    : '2px solid transparent',
+                  color: 'var(--color-text-primary)',
+                  fontFamily: 'var(--font-family)',
+                }}
+                onMouseEnter={() => setSelectedIndex(index)}
+              >
+                <FileTypeBadge filename={doc.filename} className="flex-shrink-0" />
+                <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {doc.filename}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
 
-      {/* Chat input form */}
-      <form className="flex gap-2" onSubmit={handleSubmit}>
-        <input
-          ref={inputRef}
-          id="chat-input"
-          name="chat-input"
-          type="text"
-          value={input}
-          onChange={handleInputChange}
-          onKeyDown={handleKeyDown}
-          placeholder="Ask a question about your documents..."
-          disabled={disabled}
-          className={clsx(
-            "flex-1 px-3 py-2 text-sm font-sans border border-gray-200 rounded outline-none",
-            disabled ? "bg-gray-100 text-gray-400" : "bg-white text-gray-800"
-          )}
-        />
-        <button
-          type="submit"
-          disabled={disabled || !input.trim()}
-          className={clsx(
-            "px-4 py-2 text-sm font-sans font-medium text-white rounded border-none",
-            (disabled || !input.trim()) ? "bg-gray-300 cursor-not-allowed" : "bg-blue-600 cursor-pointer hover:bg-blue-700"
-          )}
-        >
-          Send
-        </button>
-      </form>
+        {/* Chat input form */}
+        <form onSubmit={handleSubmit} style={{ display: 'flex', alignItems: 'flex-end', gap: 8 }}>
+          <div
+            style={{
+              flex: 1,
+              display: 'flex',
+              alignItems: 'flex-end',
+              background: 'var(--color-bg-secondary)',
+              border: '1px solid var(--color-border-strong)',
+              borderRadius: 'var(--radius-input, 14px)',
+              padding: '8px 12px',
+              transition: 'border-color 0.15s ease',
+            }}
+          >
+            <textarea
+              ref={textareaRef}
+              id="chat-input"
+              name="chat-input"
+              value={input}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
+              placeholder="Message AIRA..."
+              disabled={disabled}
+              rows={1}
+              style={{
+                flex: 1,
+                background: 'transparent',
+                border: 'none',
+                outline: 'none',
+                color: 'var(--color-text-primary)',
+                fontSize: 13,
+                lineHeight: 1.5,
+                resize: 'none',
+                maxHeight: 200,
+                fontFamily: 'var(--font-family)',
+                padding: 0,
+                margin: 0,
+              }}
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={disabled || !input.trim()}
+            style={{
+              width: 30,
+              height: 30,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'var(--color-accent)',
+              border: 'none',
+              borderRadius: 8,
+              cursor: disabled || !input.trim() ? 'not-allowed' : 'pointer',
+              opacity: disabled || !input.trim() ? 0.5 : 1,
+              padding: 0,
+              flexShrink: 0,
+              transition: 'opacity 0.15s ease, background 0.15s ease',
+            }}
+            aria-label="Send message"
+          >
+            <ArrowUp size={14} color="white" strokeWidth={2.5} />
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
