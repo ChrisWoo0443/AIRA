@@ -1,78 +1,73 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { Layout } from './components/layout/Layout'
 import { FileUpload } from './components/FileUpload'
 import { DocumentList } from './components/DocumentList'
-import { Chat } from './components/Chat'
-import ModelSelector from './components/ModelSelector'
-import { Layout } from './components/layout/Layout'
+import Chat from './components/Chat'
+import { fetchDocuments, deleteDocument, bulkDeleteDocuments } from './services/api'
 import type { Document } from './types/document'
-import * as api from './services/api'
 
-function App() {
+export default function App() {
   const [documents, setDocuments] = useState<Document[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [selectedModel, setSelectedModel] = useState<string>('')
+  const [selectedModel, setSelectedModel] = useState('')
 
-  const loadDocuments = async () => {
+  const loadDocuments = useCallback(async () => {
     try {
       setLoading(true)
-      setError(null)
-      const docs = await api.fetchDocuments()
+      const docs = await fetchDocuments()
       setDocuments(docs)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load documents')
+      setError(null)
+    } catch {
+      setError('Failed to load documents')
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => { loadDocuments() }, [loadDocuments])
 
   const handleDelete = async (id: string) => {
-    try {
-      await api.deleteDocument(id)
-      await loadDocuments()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete document')
-    }
+    await deleteDocument(id)
+    loadDocuments()
   }
 
   const handleBulkDelete = async (ids: string[]) => {
-    try {
-      await api.bulkDeleteDocuments(ids)
-      await loadDocuments()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete documents')
-    }
+    await bulkDeleteDocuments(ids)
+    loadDocuments()
   }
 
-  useEffect(() => {
-    loadDocuments()
-  }, [])
+  const panelContent = (
+    <>
+      <FileUpload onUploadComplete={loadDocuments} />
+      <DocumentList
+        documents={documents}
+        onDelete={handleDelete}
+        onBulkDelete={handleBulkDelete}
+        loading={loading}
+      />
+    </>
+  )
 
   return (
-    <Layout
-      sidebarContent={
-        <>
-          <ModelSelector onModelChange={setSelectedModel} />
-          <FileUpload onUploadComplete={loadDocuments} />
-          <DocumentList
-            documents={documents}
-            onDelete={handleDelete}
-            onBulkDelete={handleBulkDelete}
-            loading={loading}
-          />
-        </>
-      }
-    >
-      <div className="p-4 h-full">
-        {error && (
-          <div className="p-3 bg-red-50 text-red-700 rounded mb-4 text-sm">
-            <strong>Error:</strong> {error}
-          </div>
-        )}
-        <Chat selectedModel={selectedModel} documents={documents} />
-      </div>
+    <Layout panelContent={panelContent}>
+      {error && (
+        <div style={{
+          margin: '12px 24px 0',
+          padding: '10px 16px',
+          background: 'rgba(239,68,68,0.1)',
+          borderRadius: 'var(--radius-md)',
+          color: 'var(--color-status-error)',
+          fontSize: 13,
+        }}>
+          {error}
+        </div>
+      )}
+      <Chat
+        selectedModel={selectedModel}
+        onModelChange={setSelectedModel}
+        documents={documents}
+      />
     </Layout>
   )
 }
-
-export default App
