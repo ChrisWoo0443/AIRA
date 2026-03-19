@@ -1,12 +1,11 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
-import { Plus } from 'lucide-react'
+import { useState, useRef, useCallback } from 'react'
 import type { ChatMessage } from '../types/chat'
 import type { Document } from '../types/document'
 import { ChatInput } from './ChatInput'
 import { MessageList } from './MessageList'
 import { DocumentContextSelector } from './DocumentContextSelector'
 import ModelSelector from './ModelSelector'
-import { useLocalStorage } from '../hooks/useLocalStorage'
+import { useChatSessions } from '../hooks/useChatSessions'
 import * as api from '../services/api'
 
 interface ChatProps {
@@ -16,27 +15,15 @@ interface ChatProps {
 }
 
 export default function Chat({ selectedModel, onModelChange, documents }: ChatProps) {
-  const [sessionId, setSessionId, clearSessionId] = useLocalStorage<string | null>('research_agent_session_id', null)
-  const [messages, setMessages, clearMessages] = useLocalStorage<ChatMessage[]>('research_agent_messages', [])
+  const { activeChat, updateMessages, updateTitle } = useChatSessions()
+  const messages = activeChat?.messages || []
+  const sessionId = activeChat?.backendSessionId || null
+
   const [isLoading, setIsLoading] = useState(false)
   const [streamingContent, setStreamingContent] = useState('')
   const [selectedDocumentIds, setSelectedDocumentIds] = useState<Set<string>>(new Set())
 
   const streamingContentRef = useRef('')
-
-  useEffect(() => {
-    const initSession = async () => {
-      if (sessionId) return
-
-      try {
-        const id = await api.createChatSession()
-        setSessionId(id)
-      } catch (error) {
-        console.error('Failed to create session:', error)
-      }
-    }
-    initSession()
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleToggleDocument = (id: string) => {
     setSelectedDocumentIds(prev => {
@@ -74,7 +61,14 @@ export default function Chat({ selectedModel, onModelChange, documents }: ChatPr
       content: message,
       timestamp: new Date().toISOString()
     }
-    setMessages(prev => [...prev, userMessage])
+    updateMessages([...messages, userMessage])
+
+    if (activeChat?.title === 'New chat') {
+      const truncated = message.length > 40
+        ? message.slice(0, 40).replace(/\s+\S*$/, '') + '...'
+        : message
+      updateTitle(truncated)
+    }
 
     setIsLoading(true)
     setStreamingContent('')
@@ -95,7 +89,7 @@ export default function Chat({ selectedModel, onModelChange, documents }: ChatPr
           content: streamingContentRef.current,
           timestamp: new Date().toISOString()
         }
-        setMessages(prev => [...prev, assistantMessage])
+        updateMessages([...messages, userMessage, assistantMessage])
         setStreamingContent('')
         streamingContentRef.current = ''
         setIsLoading(false)
@@ -106,7 +100,7 @@ export default function Chat({ selectedModel, onModelChange, documents }: ChatPr
           content: `Error: ${error}`,
           timestamp: new Date().toISOString()
         }
-        setMessages(prev => [...prev, errorMessage])
+        updateMessages([...messages, userMessage, errorMessage])
         setStreamingContent('')
         streamingContentRef.current = ''
         setIsLoading(false)
@@ -123,7 +117,7 @@ export default function Chat({ selectedModel, onModelChange, documents }: ChatPr
 
     // Truncate: keep everything up to but not including the AI message
     const truncated = messages.slice(0, messageIndex)
-    setMessages(truncated)
+    updateMessages(truncated)
 
     // Stream new response without adding a new user message
     setIsLoading(true)
@@ -138,7 +132,7 @@ export default function Chat({ selectedModel, onModelChange, documents }: ChatPr
         setStreamingContent(streamingContentRef.current)
       },
       () => {
-        setMessages(prev => [...prev, {
+        updateMessages([...truncated, {
           role: 'assistant' as const,
           content: streamingContentRef.current,
           timestamp: new Date().toISOString()
@@ -150,28 +144,7 @@ export default function Chat({ selectedModel, onModelChange, documents }: ChatPr
       selectedModel || undefined,
       selectedDocumentIds.size > 0 ? Array.from(selectedDocumentIds) : undefined
     )
-  }, [messages, sessionId, selectedModel, selectedDocumentIds])
-
-  const handleNewConversation = async () => {
-    try {
-      if (sessionId) {
-        api.deleteChatSession(sessionId).catch(err => {
-          console.warn('Failed to delete session:', err)
-        })
-      }
-
-      clearSessionId()
-      clearMessages()
-
-      setStreamingContent('')
-      streamingContentRef.current = ''
-
-      const id = await api.createChatSession()
-      setSessionId(id)
-    } catch (error) {
-      console.error('Failed to clear history:', error)
-    }
-  }
+  }, [messages, sessionId, selectedModel, selectedDocumentIds, updateMessages])
 
   return (
     <div style={{
@@ -210,32 +183,6 @@ export default function Chat({ selectedModel, onModelChange, documents }: ChatPr
           gap: 8,
           alignItems: 'center',
         }}>
-          {/* New Chat button */}
-          <button
-            onClick={handleNewConversation}
-            disabled={isLoading}
-            style={{
-              color: 'var(--color-text-tertiary)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 4,
-              background: 'none',
-              border: 'none',
-              cursor: isLoading ? 'not-allowed' : 'pointer',
-              fontSize: 12,
-              padding: 0,
-            }}
-            onMouseEnter={e => {
-              if (!isLoading) e.currentTarget.style.color = 'var(--color-accent)'
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.color = 'var(--color-text-tertiary)'
-            }}
-          >
-            <Plus size={14} />
-            New Chat
-          </button>
-
           {/* Model Selector */}
           <ModelSelector onModelChange={onModelChange} />
 
