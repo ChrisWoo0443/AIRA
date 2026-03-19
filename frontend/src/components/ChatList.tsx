@@ -67,7 +67,7 @@ export default function ChatList() {
                 borderRadius: 6,
                 cursor: 'pointer',
                 background: isActive ? 'var(--color-bg-elevated)' : 'transparent',
-                borderLeft: isActive ? '2px solid var(--color-accent)' : '2px solid transparent',
+                border: isActive ? '1px solid var(--color-border-strong)' : '1px solid transparent',
                 transition: 'background 120ms ease',
                 display: 'flex',
                 alignItems: 'center',
