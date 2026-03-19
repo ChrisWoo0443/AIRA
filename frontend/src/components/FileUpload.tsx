@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import clsx from 'clsx';
+import { Upload } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { uploadDocumentWithProgress } from '../services/api';
 
@@ -32,7 +32,6 @@ export function FileUpload({ onUploadComplete }: FileUploadProps) {
         }
       );
 
-      // Mark as complete
       setUploads((prev) =>
         prev.map((u) =>
           u.id === item.id ? { ...u, status: 'complete' as const, progress: 100 } : u
@@ -41,7 +40,6 @@ export function FileUpload({ onUploadComplete }: FileUploadProps) {
 
       onUploadComplete();
 
-      // Remove from list after 2 seconds
       setTimeout(() => {
         setUploads((prev) => prev.filter((u) => u.id !== item.id));
       }, 2000);
@@ -58,7 +56,6 @@ export function FileUpload({ onUploadComplete }: FileUploadProps) {
   const onDrop = async (acceptedFiles: File[]) => {
     if (acceptedFiles.length === 0) return;
 
-    // Create upload items for all files
     const newItems: UploadItem[] = acceptedFiles.map((file) => ({
       id: `${Date.now()}-${Math.random()}`,
       file,
@@ -68,12 +65,10 @@ export function FileUpload({ onUploadComplete }: FileUploadProps) {
 
     setUploads((prev) => [...prev, ...newItems]);
 
-    // Upload all files concurrently
     await Promise.all(newItems.map((item) => uploadFile(item)));
   };
 
   const onDropRejected = (rejections: any[]) => {
-    // Create error items for rejected files
     const errorItems: UploadItem[] = rejections.map((rejection) => {
       let errorMessage = 'File rejected';
       if (rejection.errors[0].code === 'file-too-large') {
@@ -97,7 +92,6 @@ export function FileUpload({ onUploadComplete }: FileUploadProps) {
   };
 
   const handleRetry = (item: UploadItem) => {
-    // Reset item to uploading state
     setUploads((prev) =>
       prev.map((u) =>
         u.id === item.id
@@ -106,7 +100,6 @@ export function FileUpload({ onUploadComplete }: FileUploadProps) {
       )
     );
 
-    // Re-upload
     uploadFile(item);
   };
 
@@ -118,9 +111,9 @@ export function FileUpload({ onUploadComplete }: FileUploadProps) {
       'text/plain': ['.txt'],
       'text/markdown': ['.md'],
     },
-    maxSize: 10 * 1024 * 1024, // 10MB
+    maxSize: 10 * 1024 * 1024,
     multiple: true,
-    noClick: true, // Disable click on dropzone, we'll use button
+    noClick: true,
   });
 
   const handleUploadButtonClick = () => {
@@ -130,72 +123,124 @@ export function FileUpload({ onUploadComplete }: FileUploadProps) {
   return (
     <div>
       {/* Upload button */}
-      <div className="flex items-center gap-2 mb-3">
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
         <button
           onClick={handleUploadButtonClick}
-          className="px-3 py-1 text-xs font-medium bg-blue-600 text-white rounded hover:bg-blue-700 cursor-pointer"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            padding: '5px 12px',
+            fontSize: 12,
+            fontWeight: 500,
+            fontFamily: 'inherit',
+            background: 'var(--color-accent)',
+            color: '#fff',
+            border: 'none',
+            borderRadius: 6,
+            cursor: 'pointer',
+            transition: 'background 0.15s',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'var(--color-accent-hover)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'var(--color-accent)';
+          }}
         >
+          <Upload size={14} />
           Upload
         </button>
-        <span className="text-xs text-gray-400">
-          Drag and drop files or click Upload (PDF, TXT, MD - max 10MB)
+        <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)' }}>
+          PDF, TXT, MD &middot; max 10MB
         </span>
       </div>
 
       {/* Drag-and-drop zone */}
       <div
         {...getRootProps()}
-        className={clsx(
-          "relative border-2 border-dashed rounded-lg transition-all duration-200",
-          isDragActive && "bg-blue-50/50 border-blue-400"
-        )}
+        style={{
+          position: 'relative',
+          border: isDragActive
+            ? '2px solid var(--color-accent)'
+            : '2px dashed var(--color-border)',
+          borderRadius: 10,
+          background: isDragActive ? 'rgba(91,138,245,0.08)' : 'transparent',
+          transition: 'all 0.2s',
+        }}
       >
         <input {...getInputProps()} ref={inputRef} id="file-upload" name="file-upload" />
 
-        {/* Upload items list */}
-        <div className="p-3 space-y-2 min-h-[60px]">
+        <div style={{ padding: 12, minHeight: 60, display: 'flex', flexDirection: 'column', gap: 8 }}>
           {uploads.length === 0 && !isDragActive && (
-            <div className="text-center py-4 text-sm text-gray-400">
-              No uploads in progress
+            <div style={{ textAlign: 'center', padding: '16px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+              <Upload size={20} style={{ color: 'var(--color-text-tertiary)' }} />
+              <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>
+                Drop files here
+              </span>
             </div>
           )}
 
           {isDragActive && (
-            <div className="text-center py-4 text-sm text-blue-500 font-medium">
+            <div style={{ textAlign: 'center', padding: '16px 0', fontSize: 12, color: 'var(--color-accent)', fontWeight: 500 }}>
               Drop files here
             </div>
           )}
 
           {uploads.map((item) => (
-            <div key={item.id} className="space-y-1">
+            <div key={item.id} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               {item.status === 'error' ? (
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm truncate">{item.file.name}</div>
-                    <div className="text-xs text-red-500">{item.errorMessage}</div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 12, color: 'var(--color-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {item.file.name}
+                    </div>
+                    <div style={{ fontSize: 11, color: 'var(--color-status-error)', marginTop: 2 }}>
+                      {item.errorMessage}
+                    </div>
                   </div>
                   <button
                     onClick={() => handleRetry(item)}
-                    className="text-xs text-blue-600 hover:underline cursor-pointer flex-shrink-0"
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      padding: 0,
+                      cursor: 'pointer',
+                      fontSize: 11,
+                      color: 'var(--color-accent)',
+                      fontFamily: 'inherit',
+                      flexShrink: 0,
+                    }}
                   >
                     Retry
                   </button>
                 </div>
               ) : (
                 <div>
-                  <div className="flex items-center justify-between gap-2 mb-1">
-                    <div className="text-sm truncate flex-1 min-w-0">{item.file.name}</div>
-                    <div className="text-xs text-gray-500 flex-shrink-0">
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 4 }}>
+                    <div style={{ fontSize: 12, color: 'var(--color-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>
+                      {item.file.name}
+                    </div>
+                    <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', flexShrink: 0 }}>
                       {item.progress}%
                     </div>
                   </div>
-                  <div className="h-1.5 rounded-full bg-gray-200 overflow-hidden">
+                  <div
+                    style={{
+                      height: 2,
+                      borderRadius: 1,
+                      background: 'var(--color-bg-input)',
+                      overflow: 'hidden',
+                    }}
+                  >
                     <div
-                      className={clsx(
-                        "h-full transition-all duration-300",
-                        item.status === 'complete' ? "bg-green-500" : "bg-blue-500"
-                      )}
-                      style={{ width: `${item.progress}%` }}
+                      style={{
+                        height: '100%',
+                        width: `${item.progress}%`,
+                        background: item.status === 'complete' ? '#22c55e' : 'var(--color-accent)',
+                        transition: 'width 0.3s',
+                        borderRadius: 1,
+                      }}
                     />
                   </div>
                 </div>

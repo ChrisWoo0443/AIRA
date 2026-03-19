@@ -1,8 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { HiOutlineTrash } from 'react-icons/hi2';
-import clsx from 'clsx';
+import { Trash2 } from 'lucide-react';
 import type { Document } from '../types/document';
-import { FileTypeIcon } from './FileTypeIcon';
+import FileTypeBadge from './FileTypeBadge';
 
 interface DocumentListProps {
   documents: Document[];
@@ -12,6 +11,14 @@ interface DocumentListProps {
 }
 
 type SortBy = 'name' | 'date' | 'size';
+
+const SORT_LABELS: Record<SortBy, string> = {
+  date: 'Recent',
+  name: 'Name',
+  size: 'Size',
+};
+
+const SORT_CYCLE: SortBy[] = ['date', 'name', 'size'];
 
 export function DocumentList({ documents, onDelete, onBulkDelete, loading }: DocumentListProps) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -37,7 +44,6 @@ export function DocumentList({ documents, onDelete, onBulkDelete, loading }: Doc
     }
   };
 
-  // Filter documents by search query
   const filteredDocuments = useMemo(() => {
     if (!searchQuery.trim()) return documents;
     const query = searchQuery.toLowerCase();
@@ -46,7 +52,6 @@ export function DocumentList({ documents, onDelete, onBulkDelete, loading }: Doc
     );
   }, [documents, searchQuery]);
 
-  // Sort filtered documents
   const sortedDocuments = useMemo(() => {
     const sorted = [...filteredDocuments];
     switch (sortBy) {
@@ -63,12 +68,10 @@ export function DocumentList({ documents, onDelete, onBulkDelete, loading }: Doc
     }
   }, [filteredDocuments, sortBy]);
 
-  // Clear selection when documents change (e.g., after delete)
   useEffect(() => {
     setSelectedIds(new Set());
   }, [documents]);
 
-  // Set indeterminate state on select-all checkbox
   useEffect(() => {
     if (selectAllRef.current) {
       selectAllRef.current.indeterminate =
@@ -106,9 +109,15 @@ export function DocumentList({ documents, onDelete, onBulkDelete, loading }: Doc
     }
   };
 
+  const cycleSortBy = () => {
+    const currentIndex = SORT_CYCLE.indexOf(sortBy);
+    const nextIndex = (currentIndex + 1) % SORT_CYCLE.length;
+    setSortBy(SORT_CYCLE[nextIndex]);
+  };
+
   if (loading) {
     return (
-      <div className="py-5 text-center text-gray-500">
+      <div style={{ padding: '20px 0', textAlign: 'center', color: 'var(--color-text-tertiary)' }}>
         Loading documents...
       </div>
     );
@@ -116,62 +125,111 @@ export function DocumentList({ documents, onDelete, onBulkDelete, loading }: Doc
 
   if (documents.length === 0) {
     return (
-      <div className="py-5 text-center text-gray-400">
+      <div style={{ padding: '20px 0', textAlign: 'center', color: 'var(--color-text-tertiary)' }}>
         No documents uploaded yet.
       </div>
     );
   }
 
   return (
-    <div className="space-y-3">
-      {/* Header section with search and sort */}
-      <div className="space-y-2">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {/* Search and sort */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <input
           type="text"
           placeholder="Search documents..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full text-sm border border-gray-200 rounded py-1.5 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          style={{
+            width: '100%',
+            boxSizing: 'border-box',
+            fontSize: 12,
+            padding: '6px 10px',
+            background: 'var(--color-bg-input)',
+            border: '1px solid var(--color-border-strong)',
+            borderRadius: 6,
+            color: 'var(--color-text-primary)',
+            outline: 'none',
+          }}
         />
 
-        <div className="flex items-center justify-between">
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as SortBy)}
-            className="text-xs bg-white border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <button
+            onClick={cycleSortBy}
+            style={{
+              background: 'none',
+              border: 'none',
+              padding: 0,
+              cursor: 'pointer',
+              fontSize: 9,
+              color: 'var(--color-text-tertiary)',
+              fontFamily: 'inherit',
+            }}
           >
-            <option value="date">Date (Newest)</option>
-            <option value="name">Name (A-Z)</option>
-            <option value="size">Size (Largest)</option>
-          </select>
+            {SORT_LABELS[sortBy]}
+          </button>
 
-          <div className="text-xs text-gray-500">
+          <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)' }}>
             {filteredDocuments.length === documents.length
-              ? `${documents.length} documents`
+              ? `${documents.length} docs`
               : `${filteredDocuments.length} of ${documents.length}`}
-          </div>
+          </span>
         </div>
       </div>
 
       {/* Select all + bulk action bar */}
-      <div className="flex items-center gap-2 px-2">
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          padding: '0 8px',
+          ...(selectedIds.size > 0
+            ? {
+                background: 'var(--color-bg-elevated)',
+                borderRadius: 6,
+                padding: '6px 8px',
+              }
+            : {}),
+        }}
+      >
         <input
           ref={selectAllRef}
           type="checkbox"
           checked={selectedIds.size === sortedDocuments.length && sortedDocuments.length > 0}
           onChange={toggleSelectAll}
-          className="w-3.5 h-3.5 rounded border-gray-300 cursor-pointer accent-blue-600"
+          style={{
+            width: 14,
+            height: 14,
+            cursor: 'pointer',
+            accentColor: 'var(--color-accent)',
+          }}
           aria-label="Select all documents"
         />
-        <span className="text-xs text-gray-500">Select All</span>
+        <span style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>Select All</span>
         {selectedIds.size > 0 && (
-          <div className="flex items-center gap-2 ml-auto">
-            <span className="text-xs text-gray-500">{selectedIds.size} selected</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
+            <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>
+              {selectedIds.size} selected
+            </span>
             <button
               onClick={handleBulkDelete}
               disabled={bulkDeleting}
-              className="text-xs text-red-600 hover:text-red-700 font-medium cursor-pointer disabled:opacity-50"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                background: 'none',
+                border: 'none',
+                padding: 0,
+                cursor: bulkDeleting ? 'default' : 'pointer',
+                fontSize: 11,
+                fontWeight: 500,
+                color: 'var(--color-danger)',
+                opacity: bulkDeleting ? 0.5 : 1,
+              }}
             >
+              <Trash2 size={14} />
               {bulkDeleting ? 'Deleting...' : 'Delete'}
             </button>
           </div>
@@ -180,47 +238,97 @@ export function DocumentList({ documents, onDelete, onBulkDelete, loading }: Doc
 
       {/* Document list */}
       {sortedDocuments.length === 0 ? (
-        <div className="py-5 text-center text-gray-400">
+        <div style={{ padding: '20px 0', textAlign: 'center', color: 'var(--color-text-tertiary)' }}>
           No documents match &apos;{searchQuery}&apos;
         </div>
       ) : (
-        <div className="space-y-1">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           {sortedDocuments.map((doc) => (
             <div
               key={doc.id}
-              className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-100 group transition-colors"
+              style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: 8,
+                padding: '8px',
+                borderRadius: 6,
+                cursor: 'default',
+                transition: 'background 0.15s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'var(--color-bg-elevated)';
+                const deleteButton = e.currentTarget.querySelector('[data-delete-btn]') as HTMLElement;
+                if (deleteButton) deleteButton.style.opacity = '1';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
+                const deleteButton = e.currentTarget.querySelector('[data-delete-btn]') as HTMLElement;
+                if (deleteButton) deleteButton.style.opacity = '0';
+              }}
             >
               <input
                 type="checkbox"
                 checked={selectedIds.has(doc.id)}
                 onChange={() => toggleSelect(doc.id)}
-                className="w-3.5 h-3.5 rounded border-gray-300 cursor-pointer accent-blue-600"
+                style={{
+                  width: 14,
+                  height: 14,
+                  cursor: 'pointer',
+                  accentColor: 'var(--color-accent)',
+                  marginTop: 2,
+                  flexShrink: 0,
+                }}
                 aria-label={`Select ${doc.filename}`}
               />
 
-              <FileTypeIcon filename={doc.filename} />
+              <FileTypeBadge filename={doc.filename} />
 
-              <div className="text-sm truncate flex-1 min-w-0">
-                {doc.filename}
-              </div>
-
-              <div className="text-xs text-gray-400 whitespace-nowrap">
-                {formatSize(doc.size)}
-              </div>
-
-              <div className="text-xs text-gray-400 whitespace-nowrap">
-                {formatDate(doc.upload_date)}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div
+                  style={{
+                    fontSize: 12,
+                    color: 'var(--color-text-primary)',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {doc.filename}
+                </div>
+                <div
+                  style={{
+                    fontSize: 10,
+                    color: 'var(--color-text-tertiary)',
+                    marginTop: 2,
+                  }}
+                >
+                  {formatSize(doc.size)} &middot; {formatDate(doc.upload_date)}
+                </div>
               </div>
 
               <button
+                data-delete-btn
                 onClick={() => handleDelete(doc.id, doc.filename)}
-                className={clsx(
-                  'p-1 text-gray-400 hover:text-red-500 transition-all',
-                  'opacity-0 group-hover:opacity-100'
-                )}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  padding: 4,
+                  cursor: 'pointer',
+                  color: 'var(--color-text-tertiary)',
+                  opacity: 0,
+                  transition: 'opacity 0.15s, color 0.15s',
+                  flexShrink: 0,
+                  marginTop: 0,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = 'var(--color-danger)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = 'var(--color-text-tertiary)';
+                }}
                 aria-label={`Delete ${doc.filename}`}
               >
-                <HiOutlineTrash className="w-4 h-4" />
+                <Trash2 size={14} />
               </button>
             </div>
           ))}

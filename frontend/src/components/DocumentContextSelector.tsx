@@ -1,8 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
-import { AiOutlineFileText } from 'react-icons/ai';
-import clsx from 'clsx';
+import { FileText } from 'lucide-react';
 import type { Document } from '../types/document';
-import { FileTypeIcon } from './FileTypeIcon';
+import FileTypeBadge from './FileTypeBadge';
 
 interface DocumentContextSelectorProps {
   documents: Document[];
@@ -20,7 +19,6 @@ export function DocumentContextSelector({
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Click outside handler to close dropdown
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -38,17 +36,37 @@ export function DocumentContextSelector({
   }, [isOpen]);
 
   const selectedCount = selectedIds.size;
-  const allSelected = selectedCount === 0; // empty = all documents by default
+  const allSelected = selectedCount === 0;
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div style={{ position: 'relative' }} ref={dropdownRef}>
       {/* Trigger button */}
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-200 rounded hover:bg-gray-50 transition-colors"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          padding: '6px 12px',
+          fontSize: 12,
+          fontWeight: 500,
+          fontFamily: 'inherit',
+          color: 'var(--color-text-secondary)',
+          background: 'var(--color-bg-elevated)',
+          border: '1px solid var(--color-border)',
+          borderRadius: 999,
+          cursor: 'pointer',
+          transition: 'background 0.15s',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = 'var(--color-bg-hover)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = 'var(--color-bg-elevated)';
+        }}
       >
-        <AiOutlineFileText className="text-base" />
+        <FileText size={14} />
         <span>
           {allSelected ? 'All' : `${selectedCount} doc${selectedCount !== 1 ? 's' : ''}`}
         </span>
@@ -56,29 +74,62 @@ export function DocumentContextSelector({
 
       {/* Dropdown panel */}
       {isOpen && (
-        <div className="absolute bottom-full left-0 mb-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg p-2 z-10">
+        <div
+          style={{
+            position: 'absolute',
+            bottom: '100%',
+            left: 0,
+            marginBottom: 8,
+            width: 256,
+            background: 'var(--color-bg-elevated)',
+            border: '1px solid var(--color-border)',
+            borderRadius: 8,
+            boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+            padding: 8,
+            zIndex: 40,
+          }}
+        >
           {/* Toggle all button */}
-          <div className="pb-2 mb-2 border-b border-gray-200">
+          <div style={{ paddingBottom: 8, marginBottom: 8, borderBottom: '1px solid var(--color-border)' }}>
             <button
               type="button"
               onClick={onToggleAll}
-              className="w-full text-left px-2 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-100 rounded transition-colors"
+              style={{
+                width: '100%',
+                textAlign: 'left',
+                padding: '6px 8px',
+                fontSize: 12,
+                fontWeight: 500,
+                fontFamily: 'inherit',
+                color: 'var(--color-text-secondary)',
+                background: 'none',
+                border: 'none',
+                borderRadius: 6,
+                cursor: 'pointer',
+                transition: 'background 0.15s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'var(--color-bg-hover)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
+              }}
             >
               {allSelected ? 'Deselect All' : 'Select All'}
             </button>
           </div>
 
-          {/* All documents indicator when none selected */}
+          {/* All documents indicator */}
           {allSelected && (
-            <div className="px-2 py-1.5 mb-2 text-xs text-gray-500 italic">
+            <div style={{ padding: '6px 8px', marginBottom: 8, fontSize: 11, color: 'var(--color-text-tertiary)', fontStyle: 'italic' }}>
               All documents (default)
             </div>
           )}
 
           {/* Document list */}
-          <div className="max-h-52 overflow-y-auto">
+          <div style={{ maxHeight: 208, overflowY: 'auto' }}>
             {documents.length === 0 ? (
-              <div className="px-2 py-3 text-xs text-gray-400 text-center">
+              <div style={{ padding: '12px 8px', fontSize: 11, color: 'var(--color-text-tertiary)', textAlign: 'center' }}>
                 No documents uploaded
               </div>
             ) : (
@@ -88,16 +139,44 @@ export function DocumentContextSelector({
                 return (
                   <label
                     key={doc.id}
-                    className="flex items-center gap-2 px-2 py-1.5 hover:bg-gray-100 rounded cursor-pointer transition-colors"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      padding: '6px 8px',
+                      borderRadius: 6,
+                      cursor: 'pointer',
+                      transition: 'background 0.15s',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'var(--color-bg-hover)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'transparent';
+                    }}
                   >
                     <input
                       type="checkbox"
                       checked={isSelected}
                       onChange={() => onToggle(doc.id)}
-                      className="w-3.5 h-3.5 text-blue-600 rounded border-gray-300 cursor-pointer"
+                      style={{
+                        width: 14,
+                        height: 14,
+                        cursor: 'pointer',
+                        accentColor: 'var(--color-accent)',
+                      }}
                     />
-                    <FileTypeIcon filename={doc.filename} className="flex-shrink-0" />
-                    <span className="flex-1 text-xs text-gray-800 truncate">
+                    <FileTypeBadge filename={doc.filename} />
+                    <span
+                      style={{
+                        flex: 1,
+                        fontSize: 12,
+                        color: 'var(--color-text-primary)',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
                       {doc.filename}
                     </span>
                   </label>
