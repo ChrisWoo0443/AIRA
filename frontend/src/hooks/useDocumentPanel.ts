@@ -1,13 +1,18 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 
+export type PanelSection = 'chats' | 'documents'
+
 interface DocumentPanelState {
   isOpen: boolean
   isMobile: boolean
+  activePanel: PanelSection
   toggle: () => void
   close: () => void
+  setActivePanel: (panel: PanelSection) => void
 }
 
 const STORAGE_KEY = 'aira-document-panel-open'
+const PANEL_KEY = 'aira-active-panel'
 
 export const DocumentPanelContext = createContext<DocumentPanelState | null>(null)
 
@@ -18,6 +23,15 @@ export function useDocumentPanelState(): DocumentPanelState {
       return stored !== null ? JSON.parse(stored) : true
     } catch {
       return true
+    }
+  })
+
+  const [activePanel, setActivePanelState] = useState<PanelSection>(() => {
+    try {
+      const stored = localStorage.getItem(PANEL_KEY)
+      return (stored === 'chats' || stored === 'documents') ? stored : 'chats'
+    } catch {
+      return 'chats'
     }
   })
 
@@ -37,10 +51,21 @@ export function useDocumentPanelState(): DocumentPanelState {
     } catch { /* ignore quota errors */ }
   }, [isOpen])
 
+  useEffect(() => {
+    try {
+      localStorage.setItem(PANEL_KEY, activePanel)
+    } catch { /* ignore */ }
+  }, [activePanel])
+
   const toggle = useCallback(() => setIsOpen(previousValue => !previousValue), [])
   const close = useCallback(() => setIsOpen(false), [])
 
-  return { isOpen, isMobile, toggle, close }
+  const setActivePanel = useCallback((panel: PanelSection) => {
+    setActivePanelState(panel)
+    setIsOpen(true)
+  }, [])
+
+  return { isOpen, isMobile, activePanel, toggle, close, setActivePanel }
 }
 
 export function useDocumentPanel(): DocumentPanelState {

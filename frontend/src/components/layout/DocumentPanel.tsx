@@ -3,59 +3,16 @@ import { useDocumentPanel } from '../../hooks/useDocumentPanel'
 
 interface DocumentPanelProps {
   children: ReactNode
-  onUploadClick?: () => void
 }
 
-function PanelHeader({ onUploadClick }: { onUploadClick?: () => void }) {
-  return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '16px 16px 8px',
-      }}
-    >
-      <span
-        style={{
-          fontSize: 10,
-          fontWeight: 600,
-          letterSpacing: '0.05em',
-          textTransform: 'uppercase',
-          color: 'var(--color-text-tertiary)',
-        }}
-      >
-        DOCUMENTS
-      </span>
-      {onUploadClick && (
-        <button
-          type="button"
-          onClick={onUploadClick}
-          style={{
-            fontSize: 10,
-            fontWeight: 500,
-            color: 'var(--color-accent)',
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: 0,
-          }}
-        >
-          + Upload
-        </button>
-      )}
-    </div>
-  )
-}
-
-function DesktopPanel({ children, onUploadClick }: DocumentPanelProps) {
+function DesktopPanel({ children }: DocumentPanelProps) {
   const { isOpen } = useDocumentPanel()
 
   return (
     <aside
       style={{
-        width: isOpen ? 200 : 0,
-        minWidth: isOpen ? 200 : 0,
+        width: isOpen ? 220 : 0,
+        minWidth: isOpen ? 220 : 0,
         overflow: 'hidden',
         transition: 'width 200ms ease, min-width 200ms ease',
         background: 'var(--color-bg-secondary)',
@@ -65,20 +22,18 @@ function DesktopPanel({ children, onUploadClick }: DocumentPanelProps) {
         height: '100%',
       }}
     >
-      <PanelHeader onUploadClick={onUploadClick} />
-      <div style={{ padding: 16, overflowY: 'auto', flex: 1 }}>
+      <div style={{ padding: '12px 0', overflowY: 'auto', flex: 1 }}>
         {children}
       </div>
     </aside>
   )
 }
 
-function MobilePanel({ children, onUploadClick }: DocumentPanelProps) {
+function MobilePanel({ children }: DocumentPanelProps) {
   const { isOpen, close } = useDocumentPanel()
 
   return (
     <>
-      {/* Backdrop overlay */}
       {isOpen && (
         <div
           onClick={close}
@@ -90,15 +45,13 @@ function MobilePanel({ children, onUploadClick }: DocumentPanelProps) {
           }}
         />
       )}
-
-      {/* Slide-out panel */}
       <aside
         style={{
           position: 'fixed',
           top: 0,
           bottom: 0,
           left: 56,
-          width: 200,
+          width: 220,
           zIndex: 60,
           background: 'var(--color-bg-secondary)',
           transform: isOpen ? 'translateX(0)' : 'translateX(-100%)',
@@ -107,8 +60,7 @@ function MobilePanel({ children, onUploadClick }: DocumentPanelProps) {
           flexDirection: 'column',
         }}
       >
-        <PanelHeader onUploadClick={onUploadClick} />
-        <div style={{ padding: 16, overflowY: 'auto', flex: 1 }}>
+        <div style={{ padding: '12px 0', overflowY: 'auto', flex: 1 }}>
           {children}
         </div>
       </aside>
@@ -116,12 +68,12 @@ function MobilePanel({ children, onUploadClick }: DocumentPanelProps) {
   )
 }
 
-export function DocumentPanel({ children, onUploadClick }: DocumentPanelProps) {
+export function DocumentPanel({ children }: DocumentPanelProps) {
   const { isMobile } = useDocumentPanel()
 
   if (isMobile) {
-    return <MobilePanel onUploadClick={onUploadClick}>{children}</MobilePanel>
+    return <MobilePanel>{children}</MobilePanel>
   }
 
-  return <DesktopPanel onUploadClick={onUploadClick}>{children}</DesktopPanel>
+  return <DesktopPanel>{children}</DesktopPanel>
 }

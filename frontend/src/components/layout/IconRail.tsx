@@ -1,12 +1,36 @@
 import { MessageSquare, FileText } from 'lucide-react'
 import { useDocumentPanel } from '../../hooks/useDocumentPanel'
 
-interface IconRailProps {
-  onScrollToBottom: () => void
-}
+export function IconRail() {
+  const { isOpen, activePanel, toggle, setActivePanel } = useDocumentPanel()
 
-export function IconRail({ onScrollToBottom }: IconRailProps) {
-  const { isOpen, toggle } = useDocumentPanel()
+  const handlePanelClick = (panel: 'chats' | 'documents') => {
+    if (activePanel === panel && isOpen) {
+      toggle()
+    } else {
+      setActivePanel(panel)
+    }
+  }
+
+  const isActive = (panel: 'chats' | 'documents') => isOpen && activePanel === panel
+
+  const buttonStyle = (panel: 'chats' | 'documents') => ({
+    width: 32,
+    height: 32,
+    display: 'flex' as const,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    borderRadius: 8,
+    border: isActive(panel)
+      ? '1px solid rgba(91,138,245,0.3)'
+      : '1px solid transparent',
+    background: isActive(panel)
+      ? 'rgba(91,138,245,0.15)'
+      : 'rgba(255,255,255,0.06)',
+    cursor: 'pointer' as const,
+    color: isActive(panel) ? 'var(--color-accent)' : 'var(--color-text-secondary)',
+    padding: 0,
+  })
 
   return (
     <nav
@@ -18,6 +42,7 @@ export function IconRail({ onScrollToBottom }: IconRailProps) {
         flexDirection: 'column',
         alignItems: 'center',
         paddingTop: 12,
+        paddingBottom: 12,
         background: 'var(--color-bg-rail)',
         borderRight: '1px solid var(--color-border-rail)',
         zIndex: 'var(--z-rail)',
@@ -37,61 +62,29 @@ export function IconRail({ onScrollToBottom }: IconRailProps) {
           fontSize: 15,
           fontWeight: 700,
           flexShrink: 0,
-          marginBottom: 12,
+          marginBottom: 16,
         }}
       >
         A
       </div>
 
-      {/* Chat button */}
+      {/* Chats button */}
       <button
         type="button"
-        onClick={onScrollToBottom}
-        aria-label="Scroll to latest message"
-        style={{
-          width: 32,
-          height: 32,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          borderRadius: 8,
-          border: '1px solid transparent',
-          background: 'rgba(255,255,255,0.06)',
-          cursor: 'pointer',
-          color: 'var(--color-text-secondary)',
-          padding: 0,
-          marginTop: 12,
-        }}
+        onClick={() => handlePanelClick('chats')}
+        aria-label="Chat history"
+        style={buttonStyle('chats')}
         className="icon-rail-button"
       >
         <MessageSquare size={18} />
       </button>
 
-      <div style={{ flex: 1 }} />
-
       {/* Documents button */}
       <button
         type="button"
-        onClick={toggle}
-        aria-label="Toggle document panel"
-        style={{
-          width: 32,
-          height: 32,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          borderRadius: 8,
-          border: isOpen
-            ? '1px solid rgba(91,138,245,0.3)'
-            : '1px solid transparent',
-          background: isOpen
-            ? 'rgba(91,138,245,0.15)'
-            : 'rgba(255,255,255,0.06)',
-          cursor: 'pointer',
-          color: isOpen ? 'var(--color-accent)' : 'var(--color-text-secondary)',
-          padding: 0,
-          marginBottom: 12,
-        }}
+        onClick={() => handlePanelClick('documents')}
+        aria-label="Documents"
+        style={{ ...buttonStyle('documents'), marginTop: 4 }}
         className="icon-rail-button"
       >
         <FileText size={18} />

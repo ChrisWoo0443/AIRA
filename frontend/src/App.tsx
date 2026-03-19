@@ -40,23 +40,41 @@ export default function App() {
     loadDocuments()
   }
 
-  const panelContent = (
+  const chatListContent = <ChatList />
+
+  const documentContent = (
     <>
-      <ChatList />
-      <div style={{ borderTop: '1px solid var(--color-border)', margin: '8px 16px' }} />
-      <FileUpload onUploadComplete={loadDocuments} />
-      <DocumentList
-        documents={documents}
-        onDelete={handleDelete}
-        onBulkDelete={handleBulkDelete}
-        loading={loading}
-      />
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '4px 16px 8px',
+      }}>
+        <span style={{
+          fontSize: 10,
+          fontWeight: 600,
+          letterSpacing: '0.05em',
+          textTransform: 'uppercase',
+          color: 'var(--color-text-tertiary)',
+        }}>
+          Documents
+        </span>
+      </div>
+      <div style={{ padding: '0 16px' }}>
+        <FileUpload onUploadComplete={loadDocuments} />
+        <DocumentList
+          documents={documents}
+          onDelete={handleDelete}
+          onBulkDelete={handleBulkDelete}
+          loading={loading}
+        />
+      </div>
     </>
   )
 
   return (
     <ChatSessionsContext.Provider value={chatSessions}>
-      <Layout panelContent={panelContent}>
+      <Layout chatListContent={chatListContent} documentContent={documentContent}>
         {error && (
           <div style={{
             margin: '12px 24px 0',

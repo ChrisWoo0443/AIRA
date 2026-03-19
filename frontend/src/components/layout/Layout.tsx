@@ -1,22 +1,20 @@
-import { type ReactNode, useRef } from 'react'
+import { type ReactNode } from 'react'
 import { DocumentPanelContext, useDocumentPanelState } from '../../hooks/useDocumentPanel'
 import { IconRail } from './IconRail'
 import { DocumentPanel } from './DocumentPanel'
 
 interface LayoutProps {
-  panelContent: ReactNode
+  chatListContent: ReactNode
+  documentContent: ReactNode
   children: ReactNode
 }
 
-export function Layout({ panelContent, children }: LayoutProps) {
+export function Layout({ chatListContent, documentContent, children }: LayoutProps) {
   const documentPanelState = useDocumentPanelState()
-  const mainRef = useRef<HTMLElement>(null)
 
-  const handleScrollToBottom = () => {
-    if (mainRef.current) {
-      mainRef.current.scrollTo({ top: mainRef.current.scrollHeight, behavior: 'smooth' })
-    }
-  }
+  const panelContent = documentPanelState.activePanel === 'chats'
+    ? chatListContent
+    : documentContent
 
   return (
     <DocumentPanelContext.Provider value={documentPanelState}>
@@ -28,10 +26,9 @@ export function Layout({ panelContent, children }: LayoutProps) {
           background: 'var(--color-bg-primary)',
         }}
       >
-        <IconRail onScrollToBottom={handleScrollToBottom} />
+        <IconRail />
         <DocumentPanel>{panelContent}</DocumentPanel>
         <main
-          ref={mainRef}
           style={{
             flex: 1,
             display: 'flex',
