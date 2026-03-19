@@ -1,39 +1,48 @@
-import { type ReactNode } from 'react';
-import { Sidebar } from './Sidebar';
-import { SidebarToggle } from './SidebarToggle';
-import { SidebarContext, useSidebarState, useSidebar } from '../../hooks/useSidebar';
+import { type ReactNode, useRef } from 'react'
+import { DocumentPanelContext, useDocumentPanelState } from '../../hooks/useDocumentPanel'
+import { IconRail } from './IconRail'
+import { DocumentPanel } from './DocumentPanel'
 
 interface LayoutProps {
-  sidebarContent: ReactNode;
-  children: ReactNode;
+  panelContent: ReactNode
+  children: ReactNode
 }
 
-function LayoutInner({ sidebarContent, children }: LayoutProps) {
-  const { isOpen, toggle } = useSidebar();
+export function Layout({ panelContent, children }: LayoutProps) {
+  const documentPanelState = useDocumentPanelState()
+  const mainRef = useRef<HTMLElement>(null)
+
+  const handleScrollToBottom = () => {
+    if (mainRef.current) {
+      mainRef.current.scrollTo({ top: mainRef.current.scrollHeight, behavior: 'smooth' })
+    }
+  }
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
-      <Sidebar>{sidebarContent}</Sidebar>
-
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="flex items-center gap-3 px-4 py-3 bg-white border-b border-gray-200">
-          <SidebarToggle isOpen={isOpen} onClick={toggle} />
-        </header>
-
-        <main className="flex-1 overflow-y-auto">
+    <DocumentPanelContext.Provider value={documentPanelState}>
+      <div
+        style={{
+          display: 'flex',
+          height: '100vh',
+          width: '100vw',
+          background: 'var(--color-bg-primary)',
+        }}
+      >
+        <IconRail onScrollToBottom={handleScrollToBottom} />
+        <DocumentPanel>{panelContent}</DocumentPanel>
+        <main
+          ref={mainRef}
+          style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            minWidth: 0,
+            overflow: 'hidden',
+          }}
+        >
           {children}
         </main>
       </div>
-    </div>
-  );
-}
-
-export function Layout(props: LayoutProps) {
-  const sidebarState = useSidebarState();
-
-  return (
-    <SidebarContext.Provider value={sidebarState}>
-      <LayoutInner {...props} />
-    </SidebarContext.Provider>
-  );
+    </DocumentPanelContext.Provider>
+  )
 }
