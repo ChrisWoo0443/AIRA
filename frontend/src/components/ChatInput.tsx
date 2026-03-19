@@ -273,6 +273,7 @@ export function ChatInput({ onSubmit, disabled, documents = [], onDocumentMentio
           >
             <ArrowUp size={14} color="white" strokeWidth={2.5} />
           </button>
+          </div>
         </form>
       </div>
     </div>
