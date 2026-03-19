@@ -213,16 +213,16 @@ export function ChatInput({ onSubmit, disabled, documents = [], onDocumentMentio
         )}
 
         {/* Chat input form */}
-        <form onSubmit={handleSubmit} style={{ display: 'flex', alignItems: 'flex-end', gap: 8 }}>
+        <form onSubmit={handleSubmit}>
           <div
             style={{
-              flex: 1,
               display: 'flex',
               alignItems: 'flex-end',
+              gap: 8,
               background: 'var(--color-bg-secondary)',
               border: '1px solid var(--color-border-strong)',
               borderRadius: 'var(--radius-input, 14px)',
-              padding: '8px 12px',
+              padding: '8px 8px 8px 14px',
               transition: 'border-color 0.15s ease',
             }}
           >
@@ -247,11 +247,10 @@ export function ChatInput({ onSubmit, disabled, documents = [], onDocumentMentio
                 resize: 'none',
                 maxHeight: 200,
                 fontFamily: 'var(--font-family)',
-                padding: 0,
+                padding: '2px 0',
                 margin: 0,
               }}
             />
-          </div>
           <button
             type="submit"
             disabled={disabled || !input.trim()}
