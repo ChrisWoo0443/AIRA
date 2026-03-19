@@ -1,1 +1,78 @@
 @import "tailwindcss";
+
+@theme {
+  --color-bg-primary: #1a1a1e;
+  --color-bg-secondary: #232328;
+  --color-bg-elevated: #2a2a30;
+  --color-bg-hover: #33333a;
+  --color-bg-input: #1e1e24;
+  --color-bg-rail: #18181b;
+
+  --color-text-primary: rgba(255, 255, 245, 0.90);
+  --color-text-secondary: rgba(235, 235, 245, 0.60);
+  --color-text-tertiary: rgba(235, 235, 245, 0.38);
+
+  --color-accent: #5b8af5;
+  --color-accent-hover: #7ba3ff;
+
+  --color-status-success: #22c55e;
+  --color-status-error: #ef4444;
+  --color-status-warning: #f59e0b;
+  --color-danger: #ef4444;
+  --color-danger-hover: #dc2626;
+
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-border-strong: rgba(255, 255, 255, 0.15);
+  --color-border-rail: rgba(255, 255, 255, 0.06);
+
+  --color-accent-gradient-start: #5b8af5;
+  --color-accent-gradient-end: #a78bfa;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-input: 14px;
+  --radius-pill: 999px;
+
+  --font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI',
+    Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans',
+    'Helvetica Neue', sans-serif;
+  --font-mono: 'SF Mono', 'Fira Code', 'Fira Mono', 'Roboto Mono',
+    'Courier New', monospace;
+}
+
+html {
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-family: var(--font-family);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: rgba(91, 138, 245, 0.3);
+  color: inherit;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.10); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.20); }
+
+@keyframes pulse-thinking {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+/* Z-index stacking order */
+:root {
+  --z-rail: 10;
+  --z-panel: 20;
+  --z-header: 30;
+  --z-dropdown: 40;
+  --z-overlay-backdrop: 50;
+  --z-overlay-panel: 60;
+  --transition-fast: 120ms ease;
+  --transition-normal: 200ms ease;
+}
