@@ -48,7 +48,8 @@ export default function App() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '4px 16px 8px',
+        padding: '0 16px',
+        marginBottom: 8,
       }}>
         <span style={{
           fontSize: 10,

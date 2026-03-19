@@ -90,8 +90,8 @@ function MessageActions({
       className="message-actions"
       style={{
         position: 'absolute',
-        top: -8,
-        right: -8,
+        top: 4,
+        right: 4,
         display: 'flex',
         gap: 2,
         background: 'var(--color-bg-elevated)',
@@ -291,10 +291,10 @@ export function MessageList({
       style={{
         flex: 1,
         overflowY: 'auto',
-        padding: 16,
+        padding: '16px 20px',
         display: 'flex',
         flexDirection: 'column',
-        gap: 12,
+        gap: 16,
       }}
     >
       <style>{hoverStyleTag}</style>
@@ -313,7 +313,7 @@ export function MessageList({
           <span
             style={{
               color: 'var(--color-text-tertiary)',
-              fontSize: 15,
+              fontSize: 14,
             }}
           >
             Start a conversation
@@ -321,7 +321,7 @@ export function MessageList({
           <span
             style={{
               color: 'var(--color-text-secondary)',
-              fontSize: 12,
+              fontSize: 11,
             }}
           >
             Upload documents and ask questions about them

@@ -156,7 +156,7 @@ export function ChatInput({ onSubmit, disabled, documents = [], onDocumentMentio
   }, [showAutocomplete]);
 
   return (
-    <div style={{ padding: '12px 24px 16px' }}>
+    <div style={{ padding: '10px 20px 14px' }}>
       <div style={{ position: 'relative', width: '100%' }}>
         {/* Autocomplete dropdown */}
         {showAutocomplete && filteredDocuments.length > 0 && (

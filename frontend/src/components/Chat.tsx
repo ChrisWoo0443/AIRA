@@ -157,7 +157,7 @@ export default function Chat({ selectedModel, onModelChange, documents }: ChatPr
       {/* Header */}
       <div style={{
         borderBottom: '1px solid var(--color-border)',
-        padding: '12px 24px',
+        padding: '10px 20px',
         zIndex: 30,
         display: 'flex',
         alignItems: 'center',
@@ -193,8 +193,8 @@ export default function Chat({ selectedModel, onModelChange, documents }: ChatPr
                 background: 'rgba(34,197,94,0.15)',
                 color: '#22c55e',
                 borderRadius: 999,
-                padding: '4px 10px',
-                fontSize: 10,
+                padding: '3px 8px',
+                fontSize: 11,
                 fontWeight: 500,
               }}>
                 {documents.length} docs
@@ -220,10 +220,6 @@ export default function Chat({ selectedModel, onModelChange, documents }: ChatPr
 
       {/* Input area */}
       <div style={{
-        display: 'flex',
-        gap: 8,
-        alignItems: 'end',
-        padding: 12,
         borderTop: '1px solid var(--color-border)',
         background: 'var(--color-bg-primary)',
       }}>

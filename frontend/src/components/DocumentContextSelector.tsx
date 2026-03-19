@@ -48,8 +48,8 @@ export function DocumentContextSelector({
           display: 'flex',
           alignItems: 'center',
           gap: 6,
-          padding: '6px 12px',
-          fontSize: 12,
+          padding: '4px 12px',
+          fontSize: 11,
           fontWeight: 500,
           fontFamily: 'inherit',
           color: 'var(--color-text-secondary)',
@@ -77,9 +77,9 @@ export function DocumentContextSelector({
         <div
           style={{
             position: 'absolute',
-            bottom: '100%',
-            left: 0,
-            marginBottom: 8,
+            top: '100%',
+            right: 0,
+            marginTop: 4,
             width: 256,
             background: 'var(--color-bg-elevated)',
             border: '1px solid var(--color-border)',
