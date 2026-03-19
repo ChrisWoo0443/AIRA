@@ -3,6 +3,8 @@ import { Layout } from './components/layout/Layout'
 import { FileUpload } from './components/FileUpload'
 import { DocumentList } from './components/DocumentList'
 import Chat from './components/Chat'
+import { ChatSessionsContext, useChatSessionsState } from './hooks/useChatSessions'
+import ChatList from './components/ChatList'
 import { fetchDocuments, deleteDocument, bulkDeleteDocuments } from './services/api'
 import type { Document } from './types/document'
 
@@ -11,6 +13,7 @@ export default function App() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedModel, setSelectedModel] = useState('')
+  const chatSessions = useChatSessionsState()
 
   const loadDocuments = useCallback(async () => {
     try {
@@ -39,6 +42,8 @@ export default function App() {
 
   const panelContent = (
     <>
+      <ChatList />
+      <div style={{ borderTop: '1px solid var(--color-border)', margin: '8px 16px' }} />
       <FileUpload onUploadComplete={loadDocuments} />
       <DocumentList
         documents={documents}
@@ -50,24 +55,26 @@ export default function App() {
   )
 
   return (
-    <Layout panelContent={panelContent}>
-      {error && (
-        <div style={{
-          margin: '12px 24px 0',
-          padding: '10px 16px',
-          background: 'rgba(239,68,68,0.1)',
-          borderRadius: 'var(--radius-md)',
-          color: 'var(--color-status-error)',
-          fontSize: 13,
-        }}>
-          {error}
-        </div>
-      )}
-      <Chat
-        selectedModel={selectedModel}
-        onModelChange={setSelectedModel}
-        documents={documents}
-      />
-    </Layout>
+    <ChatSessionsContext.Provider value={chatSessions}>
+      <Layout panelContent={panelContent}>
+        {error && (
+          <div style={{
+            margin: '12px 24px 0',
+            padding: '10px 16px',
+            background: 'rgba(239,68,68,0.1)',
+            borderRadius: 'var(--radius-md)',
+            color: 'var(--color-status-error)',
+            fontSize: 13,
+          }}>
+            {error}
+          </div>
+        )}
+        <Chat
+          selectedModel={selectedModel}
+          onModelChange={setSelectedModel}
+          documents={documents}
+        />
+      </Layout>
+    </ChatSessionsContext.Provider>
   )
 }
