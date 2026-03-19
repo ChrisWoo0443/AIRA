@@ -217,7 +217,7 @@ export function ChatInput({ onSubmit, disabled, documents = [], onDocumentMentio
           <div
             style={{
               display: 'flex',
-              alignItems: 'flex-end',
+              alignItems: 'center',
               gap: 8,
               background: 'var(--color-bg-secondary)',
               border: '1px solid var(--color-border-strong)',
@@ -233,7 +233,7 @@ export function ChatInput({ onSubmit, disabled, documents = [], onDocumentMentio
               value={input}
               onChange={handleInputChange}
               onKeyDown={handleKeyDown}
-              placeholder="Message AIRA..."
+              placeholder="Message AIRA... (use @ to reference documents)"
               disabled={disabled}
               rows={1}
               style={{
