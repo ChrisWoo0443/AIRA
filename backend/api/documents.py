@@ -20,6 +20,7 @@ from services.document_service import (
 from services.chunking_service import chunk_document
 from services.embedding_service import generate_embeddings
 from services.vector_service import add_chunks, delete_document_vectors
+from services import bm25_index_service
 
 # Setup logging
 logger = logging.getLogger(__name__)
@@ -102,6 +103,9 @@ async def upload_document(request: Request, file: UploadFile):
             chunks = chunk_document(text_content)
             embeddings = generate_embeddings(chunks)
             add_chunks(doc_id, file.filename, chunks, embeddings)
+            # Build BM25 index for hybrid search (HYBRD-01)
+            chunk_ids = [f"{doc_id}_chunk_{i}" for i in range(len(chunks))]
+            bm25_index_service.add_document(doc_id, chunks, chunk_ids)
             indexing_status = "indexed"
         except Exception as e:
             # Log error but don't fail upload - graceful degradation
@@ -153,6 +157,12 @@ async def delete_document_endpoint(request: Request, doc_id: str):
     except Exception as e:
         # Log warning but proceed with document deletion
         logger.warning(f"Vector cleanup failed for doc {doc_id}: {str(e)}")
+
+    # Clean up BM25 index (HYBRD-03)
+    try:
+        bm25_index_service.remove_document(doc_id)
+    except Exception as e:
+        logger.warning(f"BM25 cleanup failed for doc {doc_id}: {str(e)}")
 
     deleted = await delete_document(doc_id)
 
