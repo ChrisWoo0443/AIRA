@@ -19,6 +19,7 @@ for module_name in [
     "langchain_text_splitters",
     "aiofiles",
     "fitz",
+    "pymupdf",
     "slowapi",
     "slowapi.errors",
     "slowapi.middleware",
