@@ -7,6 +7,8 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from ollama_client import check_ollama_status, test_completion
 from rate_limiter import limiter
+from services.reranker_service import get_reranker_status
+from services.bm25_index_service import get_bm25_status
 from validators import validate_model_name as _validate_model_name
 from api.documents import router as documents_router
 from api.search import router as search_router
@@ -115,8 +117,15 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    """Health check endpoint for integration testing"""
-    return {"status": "ok", "service": "research-agent-api"}
+    """Health check endpoint with component readiness reporting."""
+    return {
+        "status": "ok",
+        "service": "research-agent-api",
+        "components": {
+            "reranker": get_reranker_status(),
+            "bm25": get_bm25_status(),
+        }
+    }
 
 
 @app.get("/api/ollama/status")
