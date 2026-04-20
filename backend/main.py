@@ -1,3 +1,6 @@
+from contextlib import asynccontextmanager
+import logging
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, field_validator
@@ -12,7 +15,39 @@ from api.documents import router as documents_router
 from api.search import router as search_router
 from api.chat import router as chat_router
 
-app = FastAPI(title="Research Agent API")
+logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Startup validation: ensure ChromaDB embedding dimensions match configured model."""
+    from services.vector_service import get_collection
+    from config import EMBEDDING_DIMENSIONS, EMBEDDING_MODEL
+
+    collection = get_collection()
+    chunk_count = collection.count()
+
+    if chunk_count > 0:
+        peek_result = collection.peek(limit=1)
+        stored_embeddings = peek_result.get("embeddings")
+        if stored_embeddings is not None and len(stored_embeddings) > 0:
+            stored_dimension = len(stored_embeddings[0])
+            if stored_dimension != EMBEDDING_DIMENSIONS:
+                raise RuntimeError(
+                    f"Embedding dimension mismatch: ChromaDB collection has "
+                    f"{stored_dimension}-dim vectors but {EMBEDDING_MODEL} expects "
+                    f"{EMBEDDING_DIMENSIONS}-dim. Delete the backend/uploads/vectors/ "
+                    f"directory and re-upload documents to fix this."
+                )
+
+    logger.info(
+        "Embedding dimension check passed (model=%s, expected_dim=%d, chunks=%d)",
+        EMBEDDING_MODEL, EMBEDDING_DIMENSIONS, chunk_count
+    )
+    yield
+
+
+app = FastAPI(title="Research Agent API", lifespan=lifespan)
 
 # Configure rate limiter
 app.state.limiter = limiter
@@ -116,7 +151,16 @@ async def root():
 @app.get("/health")
 async def health_check():
     """Health check endpoint for integration testing"""
-    return {"status": "ok", "service": "research-agent-api"}
+    from config import EMBEDDING_MODEL, EMBEDDING_DIMENSIONS
+
+    return {
+        "status": "ok",
+        "service": "research-agent-api",
+        "embedding": {
+            "model": EMBEDDING_MODEL,
+            "dimensions": EMBEDDING_DIMENSIONS,
+        },
+    }
 
 
 @app.get("/api/ollama/status")
