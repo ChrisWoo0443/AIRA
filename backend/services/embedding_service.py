@@ -1,10 +1,12 @@
 """
 Embedding service for generating vector embeddings via Ollama.
 
-Uses Ollama's nomic-embed-text model to generate embeddings for text chunks.
+Uses Ollama's bge-m3 model to generate dense embeddings for text chunks.
+Model name and expected dimensions are configured in config.py.
 """
 
 import ollama
+from config import EMBEDDING_MODEL, EMBEDDING_DIMENSIONS
 
 
 def generate_embeddings(texts: list[str]) -> list[list[float]]:
@@ -19,12 +21,12 @@ def generate_embeddings(texts: list[str]) -> list[list[float]]:
 
     Raises:
         RuntimeError: If Ollama service fails or returns unexpected format
-        ValueError: If embeddings don't have expected dimensions (1024)
+        ValueError: If embeddings don't have expected dimensions
     """
     try:
         # Call Ollama embed API with batch of texts
         response = ollama.embed(
-            model='nomic-embed-text',
+            model=EMBEDDING_MODEL,
             input=texts
         )
 
@@ -32,12 +34,11 @@ def generate_embeddings(texts: list[str]) -> list[list[float]]:
         embeddings = response['embeddings']
 
         # Validate first embedding has expected dimensions
-        # (nomic-embed-text typically returns 768 or 1024 depending on version)
         if embeddings:
             dims = len(embeddings[0])
-            if dims not in [768, 1024]:
+            if dims != EMBEDDING_DIMENSIONS:
                 raise ValueError(
-                    f"Unexpected embedding dimensions: {dims} (expected 768 or 1024)"
+                    f"Unexpected embedding dimensions: {dims} (expected {EMBEDDING_DIMENSIONS})"
                 )
 
         return embeddings
