@@ -145,3 +145,61 @@ def test_requirements_has_rank_bm25():
     requirements_path = Path(__file__).parent.parent / "requirements.txt"
     content = requirements_path.read_text()
     assert "rank_bm25==0.2.2" in content
+
+
+# --- Chunking config constants (Phase 03-01) ---
+
+
+def test_parent_chunk_size():
+    from config import PARENT_CHUNK_SIZE
+    assert PARENT_CHUNK_SIZE == 1000
+
+
+def test_parent_chunk_overlap():
+    from config import PARENT_CHUNK_OVERLAP
+    assert PARENT_CHUNK_OVERLAP == 100
+
+
+def test_child_chunk_size():
+    from config import CHILD_CHUNK_SIZE
+    assert CHILD_CHUNK_SIZE == 300
+
+
+def test_child_chunk_overlap():
+    from config import CHILD_CHUNK_OVERLAP
+    assert CHILD_CHUNK_OVERLAP == 50
+
+
+def test_heading_separators_first_element():
+    from config import HEADING_SEPARATORS
+    assert HEADING_SEPARATORS[0] == "\n# "
+
+
+def test_heading_separators_contains_markdown_headings():
+    from config import HEADING_SEPARATORS
+    assert "\n# " in HEADING_SEPARATORS
+    assert "\n## " in HEADING_SEPARATORS
+    assert "\n### " in HEADING_SEPARATORS
+
+
+def test_heading_separators_contains_paragraph_break():
+    from config import HEADING_SEPARATORS
+    assert "\n\n" in HEADING_SEPARATORS
+
+
+def test_heading_separators_contains_sentence_fallback():
+    from config import HEADING_SEPARATORS
+    assert ". " in HEADING_SEPARATORS
+
+
+def test_requirements_has_tiktoken():
+    requirements_path = Path(__file__).parent.parent / "requirements.txt"
+    content = requirements_path.read_text()
+    assert "tiktoken" in content
+
+
+def test_tiktoken_importable():
+    import tiktoken
+    encoding = tiktoken.get_encoding("cl100k_base")
+    token_count = len(encoding.encode("hello world"))
+    assert token_count > 0
