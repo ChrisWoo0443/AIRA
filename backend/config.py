@@ -22,3 +22,17 @@ BM25_TOP_K = 30
 # Embedding
 EMBEDDING_MODEL = "bge-m3"
 EMBEDDING_DIMENSIONS = 1024
+
+# Semantic Chunking
+PARENT_CHUNK_SIZE = 1000       # tokens (tiktoken cl100k_base)
+PARENT_CHUNK_OVERLAP = 100     # ~10% overlap
+CHILD_CHUNK_SIZE = 300         # tokens (tiktoken cl100k_base)
+CHILD_CHUNK_OVERLAP = 50       # ~15% overlap
+HEADING_SEPARATORS = [
+    "\n# ", "\n## ", "\n### ",  # Markdown headings
+    "\n\n",                      # Paragraph breaks
+    "\n",                        # Line breaks
+    ". ",                        # Sentence boundaries (fallback)
+    " ",                         # Word boundaries
+    "",                          # Character fallback
+]
