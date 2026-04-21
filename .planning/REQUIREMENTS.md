@@ -104,10 +104,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | EMBED-02 | Phase 2 | Complete |
 | EMBED-03 | Phase 2 | Complete |
 | EMBED-04 | Phase 2 | Complete |
-| CHUNK-01 | Phase 3 | Pending |
+| CHUNK-01 | Phase 3 | Complete |
 | CHUNK-02 | Phase 3 | Complete |
-| CHUNK-03 | Phase 3 | Pending |
-| CHUNK-04 | Phase 3 | Pending |
+| CHUNK-03 | Phase 3 | Complete |
+| CHUNK-04 | Phase 3 | Complete |
 | CXRET-01 | Phase 3 | Complete |
 | CXRET-02 | Phase 3 | Complete |
 | CXRET-03 | Phase 3 | Complete |
