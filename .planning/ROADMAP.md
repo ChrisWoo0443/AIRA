@@ -75,11 +75,11 @@ Plans:
   2. User asks a clear standalone question and it passes through without unnecessary rewriting (no added latency)
   3. HyDE generates a hypothetical answer for abstract queries and uses that embedding for retrieval
   4. If a rewrite drifts off-topic, the system falls back to the original query instead of returning irrelevant results
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 04-01: TBD
-- [ ] 04-02: TBD
+- [ ] 04-01-PLAN.md -- Query rewrite service: LLM classification, conversational rewriting, HyDE, confidence gate, config constants, unit tests
+- [ ] 04-02-PLAN.md -- Pipeline wiring: integrate rewrite into rag_service, HyDE embedding pass-through in retrieval_service, integration tests
 
 ## Progress
 
@@ -91,4 +91,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 | 1. Reranking + Hybrid Search | 2/3 | Executing (P03 checkpoint) | - |
 | 2. Embedding Upgrade | 1/1 | Complete   | 2026-04-20 |
 | 3. Semantic Chunking + Contextual Retrieval | 3/3 | Complete | 2026-04-21 |
-| 4. Query Rewriting | 0/2 | Not started | - |
+| 4. Query Rewriting | 0/2 | Planned | - |
