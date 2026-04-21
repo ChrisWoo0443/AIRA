@@ -7,6 +7,7 @@ metadata when provided, and remains backwards-compatible when omitted.
 """
 
 import sys
+import inspect
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -17,17 +18,14 @@ if "chromadb" not in sys.modules:
     sys.modules["chromadb"] = MagicMock()
     sys.modules["chromadb.config"] = MagicMock()
 
+from services import vector_service
+
 
 class TestAddChunksParentMetadata:
     """Test add_chunks stores parent_text in ChromaDB metadata."""
 
     def test_add_chunks_accepts_parent_texts_parameter(self):
         """add_chunks should accept parent_texts keyword argument."""
-        import importlib
-        import inspect
-        from services import vector_service
-
-        importlib.reload(vector_service)
         sig = inspect.signature(vector_service.add_chunks)
         param_names = list(sig.parameters.keys())
         assert "parent_texts" in param_names, (
@@ -36,25 +34,15 @@ class TestAddChunksParentMetadata:
 
     def test_add_chunks_accepts_child_to_parent_index_parameter(self):
         """add_chunks should accept child_to_parent_index keyword argument."""
-        import importlib
-        import inspect
-        from services import vector_service
-
-        importlib.reload(vector_service)
         sig = inspect.signature(vector_service.add_chunks)
         param_names = list(sig.parameters.keys())
         assert "child_to_parent_index" in param_names, (
             f"add_chunks missing child_to_parent_index param, got: {param_names}"
         )
 
-    @patch("services.vector_service.get_collection")
+    @patch.object(vector_service, "get_collection")
     def test_parent_text_stored_in_metadata_when_provided(self, mock_get_collection):
         """When parent_texts provided, each metadata dict should have parent_text."""
-        import importlib
-        from services import vector_service
-
-        importlib.reload(vector_service)
-
         mock_collection = MagicMock()
         mock_get_collection.return_value = mock_collection
 
@@ -81,14 +69,9 @@ class TestAddChunksParentMetadata:
         assert metadatas[0]["parent_chunk_index"] == 0
         assert metadatas[1]["parent_chunk_index"] == 0
 
-    @patch("services.vector_service.get_collection")
+    @patch.object(vector_service, "get_collection")
     def test_no_parent_text_in_metadata_when_omitted(self, mock_get_collection):
         """Backwards compat: no parent_text key in metadata when not provided."""
-        import importlib
-        from services import vector_service
-
-        importlib.reload(vector_service)
-
         mock_collection = MagicMock()
         mock_get_collection.return_value = mock_collection
 

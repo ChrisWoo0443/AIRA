@@ -5,6 +5,8 @@ Uses ChromaDB with persistent storage for document chunk embeddings.
 """
 
 from pathlib import Path
+from typing import Optional
+
 import chromadb
 from chromadb import Collection
 
@@ -48,7 +50,9 @@ def add_chunks(
     doc_id: str,
     filename: str,
     chunks: list[str],
-    embeddings: list[list[float]]
+    embeddings: list[list[float]],
+    parent_texts: Optional[list[str]] = None,
+    child_to_parent_index: Optional[list[int]] = None,
 ) -> None:
     """
     Add document chunks with embeddings to ChromaDB.
@@ -58,6 +62,8 @@ def add_chunks(
         filename: Original filename
         chunks: List of text chunks
         embeddings: List of embedding vectors (must match chunks length)
+        parent_texts: Optional parent text for each child chunk (parent-doc retrieval)
+        child_to_parent_index: Optional mapping from child index to parent index
     """
     collection = get_collection()
 
@@ -69,15 +75,19 @@ def add_chunks(
 
     # Prepare data for batch insertion
     ids = [f"{doc_id}_chunk_{i}" for i in range(total_chunks)]
-    metadatas = [
-        {
+    metadatas = []
+    for i in range(total_chunks):
+        meta = {
             "doc_id": doc_id,
             "filename": filename,
             "chunk_index": i,
-            "total_chunks": total_chunks
+            "total_chunks": total_chunks,
         }
-        for i in range(total_chunks)
-    ]
+        if parent_texts is not None:
+            meta["parent_text"] = parent_texts[i]
+        if child_to_parent_index is not None:
+            meta["parent_chunk_index"] = child_to_parent_index[i]
+        metadatas.append(meta)
 
     # Add to collection
     collection.add(
