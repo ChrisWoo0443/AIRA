@@ -99,13 +99,22 @@ async def upload_document(request: Request, file: UploadFile):
     indexing_status = "pending"
     if extraction_status == "success" and text_content:
         try:
-            # Chunk, embed, and store in vector DB
-            chunks = chunk_document(text_content)
-            embeddings = generate_embeddings(chunks)
-            add_chunks(doc_id, file.filename, chunks, embeddings)
-            # Build BM25 index for hybrid search (HYBRD-01)
-            chunk_ids = [f"{doc_id}_chunk_{i}" for i in range(len(chunks))]
-            bm25_index_service.add_document(doc_id, chunks, chunk_ids)
+            # Two-pass chunking: children for embedding, parents for LLM context
+            chunk_result = chunk_document(text_content)
+            child_chunks = chunk_result["child_chunks"]
+            parent_texts = chunk_result["parent_texts"]
+            child_to_parent_index = chunk_result["child_to_parent_index"]
+
+            # Embed child chunks (small, precise) and store with parent metadata
+            embeddings = generate_embeddings(child_chunks)
+            add_chunks(
+                doc_id, file.filename, child_chunks, embeddings,
+                parent_texts=parent_texts,
+                child_to_parent_index=child_to_parent_index,
+            )
+            # Build BM25 index on child chunks for keyword matching
+            chunk_ids = [f"{doc_id}_chunk_{i}" for i in range(len(child_chunks))]
+            bm25_index_service.add_document(doc_id, child_chunks, chunk_ids)
             indexing_status = "indexed"
         except Exception as e:
             # Log error but don't fail upload - graceful degradation

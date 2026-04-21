@@ -82,6 +82,7 @@ def _query_dense(
             "chunk_position": chunk_position,
             "relevance_score": relevance_score,
             "chunk_id": chunk_id,
+            "parent_text": metadata.get("parent_text"),
         })
 
     formatted_results.sort(key=lambda x: x["relevance_score"], reverse=True)
@@ -186,10 +187,40 @@ def _fetch_chunk_metadata(chunk_id: str) -> Optional[dict]:
             "chunk_position": f"{chunk_index + 1}/{total_chunks}",
             "relevance_score": 0.0,
             "chunk_id": chunk_id,
+            "parent_text": metadata.get("parent_text"),
         }
     except Exception:
         logger.warning("Failed to fetch metadata for chunk %s", chunk_id)
         return None
+
+
+def _expand_parents(results: list[dict]) -> list[dict]:
+    """
+    Replace child text with parent text for LLM context.
+
+    Deduplicates so the same parent is not returned twice. Preserves
+    original child text in the child_text field for diagnostics.
+    Results without parent_text (legacy documents) pass through unchanged.
+
+    Args:
+        results: List of retrieval result dicts
+
+    Returns:
+        Deduplicated list with parent text in the text field
+    """
+    seen_parents = set()
+    expanded = []
+    for result in results:
+        parent_text = result.get("parent_text")
+        if parent_text:
+            parent_key = hash(parent_text)
+            if parent_key in seen_parents:
+                continue
+            seen_parents.add(parent_key)
+            result["child_text"] = result["text"]
+            result["text"] = parent_text
+        expanded.append(result)
+    return expanded
 
 
 def search_documents(
@@ -276,5 +307,8 @@ def search_documents(
         result.setdefault("reranker_score", None)
         result.setdefault("bm25_rank", None)
         result.setdefault("dense_rank", None)
+
+    # Expand children to parent text for LLM context (CHUNK-02)
+    reranked = _expand_parents(reranked)
 
     return reranked
