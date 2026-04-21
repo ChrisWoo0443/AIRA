@@ -16,9 +16,9 @@ def test_validate_context_returns_true_when_all_terms_in_source():
     """Terms from context that all appear in the document should pass."""
     from services.contextual_retrieval_service import validate_context
 
-    context = "This chunk discusses the retrieval pipeline architecture"
-    chunk_text = "retrieval pipeline architecture details"
-    document_text = "The full document about retrieval pipeline architecture and design"
+    context = "This section covers the retrieval pipeline architecture"
+    chunk_text = "retrieval pipeline architecture details section"
+    document_text = "The full document about retrieval pipeline architecture and covers design"
 
     assert validate_context(context, chunk_text, document_text) is True
 

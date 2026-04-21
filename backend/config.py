@@ -36,3 +36,9 @@ HEADING_SEPARATORS = [
     " ",                         # Word boundaries
     "",                          # Character fallback
 ]
+
+# Contextual Retrieval (D-07: config-gated, default disabled)
+CONTEXTUAL_RETRIEVAL_ENABLED = False
+CONTEXT_GENERATION_MODEL = None  # None = use user's selected chat model (D-05)
+CONTEXT_GENERATION_TIMEOUT = 300  # seconds per document (5 min max)
+CONTEXT_VALIDATION_THRESHOLD = 0.7  # 70% term overlap required (D-06)
