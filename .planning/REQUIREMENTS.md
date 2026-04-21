@@ -39,9 +39,9 @@ Requirements for this milestone. Each maps to roadmap phases.
 
 ### Contextual Retrieval
 
-- [ ] **CXRET-01**: At ingest time, each chunk is prepended with a 1-2 sentence LLM-generated summary describing where the chunk sits in the source document
-- [ ] **CXRET-02**: Context summary is stored as chunk metadata and prepended to chunk text before embedding and BM25 indexing
-- [ ] **CXRET-03**: Context generation validates that key terms in the summary appear in the source document (anti-hallucination check)
+- [x] **CXRET-01**: At ingest time, each chunk is prepended with a 1-2 sentence LLM-generated summary describing where the chunk sits in the source document
+- [x] **CXRET-02**: Context summary is stored as chunk metadata and prepended to chunk text before embedding and BM25 indexing
+- [x] **CXRET-03**: Context generation validates that key terms in the summary appear in the source document (anti-hallucination check)
 
 ### Query Rewriting
 
@@ -108,9 +108,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CHUNK-02 | Phase 3 | Complete |
 | CHUNK-03 | Phase 3 | Pending |
 | CHUNK-04 | Phase 3 | Pending |
-| CXRET-01 | Phase 3 | Pending |
-| CXRET-02 | Phase 3 | Pending |
-| CXRET-03 | Phase 3 | Pending |
+| CXRET-01 | Phase 3 | Complete |
+| CXRET-02 | Phase 3 | Complete |
+| CXRET-03 | Phase 3 | Complete |
 | QRWRT-01 | Phase 4 | Pending |
 | QRWRT-02 | Phase 4 | Pending |
 | QRWRT-03 | Phase 4 | Pending |

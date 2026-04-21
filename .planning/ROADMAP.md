@@ -64,7 +64,7 @@ Plans:
 Plans:
 - [x] 03-01-PLAN.md -- Semantic chunking service rewrite with tiktoken, heading-aware splitting, parent-child mapping
 - [x] 03-02-PLAN.md -- Ingestion pipeline wiring, ChromaDB parent metadata, parent expansion in retrieval
-- [ ] 03-03-PLAN.md -- Config-gated contextual retrieval service with anti-hallucination validation
+- [x] 03-03-PLAN.md -- Config-gated contextual retrieval service with anti-hallucination validation
 
 ### Phase 4: Query Rewriting
 **Goal**: Conversational follow-ups and abstract queries are resolved against session history before retrieval, so "what about the second one?" returns the right chunks
@@ -90,5 +90,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 |-------|----------------|--------|-----------|
 | 1. Reranking + Hybrid Search | 2/3 | Executing (P03 checkpoint) | - |
 | 2. Embedding Upgrade | 1/1 | Complete   | 2026-04-20 |
-| 3. Semantic Chunking + Contextual Retrieval | 1/3 | Executing | - |
+| 3. Semantic Chunking + Contextual Retrieval | 3/3 | Complete | 2026-04-21 |
 | 4. Query Rewriting | 0/2 | Not started | - |
