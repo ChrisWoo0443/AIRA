@@ -78,7 +78,7 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 04-01-PLAN.md -- Query rewrite service: LLM classification, conversational rewriting, HyDE, confidence gate, config constants, unit tests
+- [x] 04-01-PLAN.md -- Query rewrite service: LLM classification, conversational rewriting, HyDE, confidence gate, config constants, unit tests
 - [ ] 04-02-PLAN.md -- Pipeline wiring: integrate rewrite into rag_service, HyDE embedding pass-through in retrieval_service, integration tests
 
 ## Progress

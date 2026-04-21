@@ -45,10 +45,10 @@ Requirements for this milestone. Each maps to roadmap phases.
 
 ### Query Rewriting
 
-- [ ] **QRWRT-01**: Conversational follow-up queries are rewritten using session history before embedding
-- [ ] **QRWRT-02**: Standalone queries (no ambiguous references) pass through without unnecessary rewriting
-- [ ] **QRWRT-03**: HyDE generates a hypothetical answer for abstract queries and embeds that instead of the raw query
-- [ ] **QRWRT-04**: Confidence gate falls back to original query if the rewrite appears off-topic (topic drift protection)
+- [x] **QRWRT-01**: Conversational follow-up queries are rewritten using session history before embedding
+- [x] **QRWRT-02**: Standalone queries (no ambiguous references) pass through without unnecessary rewriting
+- [x] **QRWRT-03**: HyDE generates a hypothetical answer for abstract queries and embeds that instead of the raw query
+- [x] **QRWRT-04**: Confidence gate falls back to original query if the rewrite appears off-topic (topic drift protection)
 
 ## v2 Requirements
 
@@ -111,10 +111,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CXRET-01 | Phase 3 | Complete |
 | CXRET-02 | Phase 3 | Complete |
 | CXRET-03 | Phase 3 | Complete |
-| QRWRT-01 | Phase 4 | Pending |
-| QRWRT-02 | Phase 4 | Pending |
-| QRWRT-03 | Phase 4 | Pending |
-| QRWRT-04 | Phase 4 | Pending |
+| QRWRT-01 | Phase 4 | Complete |
+| QRWRT-02 | Phase 4 | Complete |
+| QRWRT-03 | Phase 4 | Complete |
+| QRWRT-04 | Phase 4 | Complete |
 
 **Coverage:**
 - v1 requirements: 25 total
