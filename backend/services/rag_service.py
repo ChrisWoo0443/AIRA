@@ -4,9 +4,15 @@ RAG service orchestrating document retrieval and LLM response generation.
 Combines semantic search with streaming chat completion for context-aware answers.
 """
 
+import logging
 from typing import AsyncGenerator, Optional
+
 from services.retrieval_service import search_documents
+from services.query_rewrite_service import rewrite_query
 from ollama_client import stream_chat_completion
+from config import QUERY_REWRITING_ENABLED
+
+logger = logging.getLogger(__name__)
 
 
 # System prompt template for RAG responses
@@ -75,8 +81,25 @@ async def generate_rag_response(
         If no relevant documents are found, yields an informative message
         instead of calling the LLM.
     """
+    # Query rewriting: resolve follow-ups and abstract queries before search
+    effective_query = query
+    hyde_embedding = None
+
+    if QUERY_REWRITING_ENABLED and conversation_history:
+        try:
+            rewrite_result = rewrite_query(query, conversation_history)
+            effective_query = rewrite_result.effective_query
+            hyde_embedding = rewrite_result.hyde_embedding
+        except Exception as exc:
+            logger.warning("Query rewriting failed: %s, using original query", str(exc))
+
     # Retrieve relevant document chunks
-    search_results = search_documents(query, top_k=top_k, doc_ids=document_ids)
+    search_results = search_documents(
+        effective_query,
+        top_k=top_k,
+        doc_ids=document_ids,
+        query_embedding=hyde_embedding,
+    )
 
     # Handle case where no documents are found
     if not search_results:

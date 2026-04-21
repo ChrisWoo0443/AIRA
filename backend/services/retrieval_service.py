@@ -226,7 +226,8 @@ def _expand_parents(results: list[dict]) -> list[dict]:
 def search_documents(
     query: str,
     top_k: int = 5,
-    doc_ids: Optional[list[str]] = None
+    doc_ids: Optional[list[str]] = None,
+    query_embedding: Optional[list[float]] = None,
 ) -> list[dict]:
     """
     Search for relevant document chunks using hybrid retrieval.
@@ -239,6 +240,8 @@ def search_documents(
         top_k: Maximum number of results (default: 5, internally uses config)
         doc_ids: Optional list of document IDs to filter results
                  (None = search all documents)
+        query_embedding: Optional pre-computed embedding vector (for HyDE).
+                         When provided, skips generate_embeddings call.
 
     Returns:
         List of dicts with all SearchResult fields plus diagnostic scores,
@@ -247,12 +250,13 @@ def search_documents(
     Raises:
         RuntimeError: If Ollama embedding service is unavailable
     """
-    # Generate query embedding
-    try:
-        query_embeddings = generate_embeddings([query])
-        query_embedding = query_embeddings[0]
-    except RuntimeError as e:
-        raise RuntimeError(f"Cannot search: {str(e)}") from e
+    # Generate query embedding (or use provided HyDE embedding)
+    if query_embedding is None:
+        try:
+            query_embeddings = generate_embeddings([query])
+            query_embedding = query_embeddings[0]
+        except RuntimeError as e:
+            raise RuntimeError(f"Cannot search: {str(e)}") from e
 
     # Dense over-retrieval from ChromaDB
     dense_results = _query_dense(
