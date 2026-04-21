@@ -23,17 +23,17 @@ When a user asks a question over their uploaded documents, the retrieved chunks 
 - ✓ Standalone vector search endpoint (no generation) for debugging — existing
 - ✓ Rate limiting on all endpoints via SlowAPI — existing
 - ✓ Frontend (React 19 + Vite + Tailwind 4) with file upload, doc list, session list, markdown rendering — existing
+- ✓ Cross-encoder reranker (bge-reranker-v2-m3, lazy singleton, 200ms timeout with RRF fallback) — Phase 1
+- ✓ Hybrid search (BM25 + dense via RRF fusion, persistent index, rebuild on delete) — Phase 1
+- ✓ Embedding upgrade to bge-m3 (1024-dim, multilingual, config-driven, startup dimension validation) — Phase 2
+
+- ✓ Semantic chunking (two-pass parent-child, tiktoken cl100k_base, heading-aware splitting, parent-doc retrieval) — Phase 3
+- ✓ Contextual retrieval (config-gated LLM context summaries with anti-hallucination validation) — Phase 3
+- ✓ Query rewriting with LLM classification, conversational rewriting, HyDE, and confidence gate — Phase 4
 
 ### Active
 
-Six prioritized retrieval-quality improvements. Each ships independently and is vibe-checked against a small set of representative queries before/after.
-
-- [ ] **Cross-encoder reranker** — retrieve top 30 dense, rerank to top 5 with `bge-reranker-v2-m3` (multilingual, runs locally on CPU in <100ms)
-- [ ] **Hybrid search (BM25 + dense)** — add `rank_bm25` index, fuse with Reciprocal Rank Fusion to catch acronyms, proper nouns, exact-match queries dense embeddings miss
-- [ ] **Embedding upgrade** — replace `nomic-embed-text` with `bge-m3` (multilingual; dense + sparse + ColBERT representations); wipe + rebuild ChromaDB on this phase boundary
-- [ ] **Smarter chunking** — semantic chunks (~800 tokens) split on headings/paragraphs first then by size; add parent-document retrieval (embed small chunks, return larger parent context to LLM)
-- [ ] **Contextual Retrieval** — at ingest time, prepend each chunk with a 1-2 sentence LLM-generated summary of where it sits in the document (Anthropic technique, ~35% retrieval-failure reduction in their benchmarks)
-- [ ] **Query rewriting / HyDE** — for conversational follow-ups, rewrite the user query using session history before embedding; fixes "what about the second one?" style failures
+No active requirements remain for this milestone. All retrieval-quality improvements are validated.
 
 ### Out of Scope
 
@@ -102,4 +102,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-15 after initialization*
+*Last updated: 2026-04-21 after Phase 4 completion*
