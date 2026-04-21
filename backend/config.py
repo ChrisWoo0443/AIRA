@@ -42,3 +42,11 @@ CONTEXTUAL_RETRIEVAL_ENABLED = False
 CONTEXT_GENERATION_MODEL = None  # None = use user's selected chat model (D-05)
 CONTEXT_GENERATION_TIMEOUT = 300  # seconds per document (5 min max)
 CONTEXT_VALIDATION_THRESHOLD = 0.7  # 70% term overlap required (D-06)
+
+# Query Rewriting (per D-01: LLM-based classification)
+QUERY_REWRITING_ENABLED = True
+QUERY_REWRITE_MODEL = None            # None = use user's selected chat model
+QUERY_REWRITE_HISTORY_WINDOW = 6      # last N messages for context (per D-02)
+CONFIDENCE_GATE_THRESHOLD = 0.4       # cosine similarity floor for rewrites (per D-05)
+HYDE_CONFIDENCE_GATE_THRESHOLD = 0.3  # lower threshold for HyDE passages (per D-05)
+HYDE_PASSAGE_MAX_TOKENS = 150         # num_predict limit for HyDE generation
