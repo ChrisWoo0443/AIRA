@@ -53,6 +53,7 @@ def add_chunks(
     embeddings: list[list[float]],
     parent_texts: Optional[list[str]] = None,
     child_to_parent_index: Optional[list[int]] = None,
+    context_prefixes: Optional[list[str]] = None,
 ) -> None:
     """
     Add document chunks with embeddings to ChromaDB.
@@ -64,6 +65,7 @@ def add_chunks(
         embeddings: List of embedding vectors (must match chunks length)
         parent_texts: Optional parent text for each child chunk (parent-doc retrieval)
         child_to_parent_index: Optional mapping from child index to parent index
+        context_prefixes: Optional context prefix per chunk (contextual retrieval)
     """
     collection = get_collection()
 
@@ -87,6 +89,8 @@ def add_chunks(
             meta["parent_text"] = parent_texts[i]
         if child_to_parent_index is not None:
             meta["parent_chunk_index"] = child_to_parent_index[i]
+        if context_prefixes is not None:
+            meta["context_prefix"] = context_prefixes[i]
         metadatas.append(meta)
 
     # Add to collection

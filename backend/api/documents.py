@@ -17,7 +17,9 @@ from services.document_service import (
     delete_document,
     UPLOAD_DIR
 )
+from config import CONTEXTUAL_RETRIEVAL_ENABLED
 from services.chunking_service import chunk_document
+from services.contextual_retrieval_service import generate_chunk_contexts
 from services.embedding_service import generate_embeddings
 from services.vector_service import add_chunks, delete_document_vectors
 from services import bm25_index_service
@@ -105,16 +107,31 @@ async def upload_document(request: Request, file: UploadFile):
             parent_texts = chunk_result["parent_texts"]
             child_to_parent_index = chunk_result["child_to_parent_index"]
 
-            # Embed child chunks (small, precise) and store with parent metadata
-            embeddings = generate_embeddings(child_chunks)
+            # Contextual retrieval: generate context prefixes (CXRET-01, D-07)
+            context_prefixes = [""] * len(child_chunks)
+            if CONTEXTUAL_RETRIEVAL_ENABLED:
+                logger.info("Generating context summaries for %d chunks...", len(child_chunks))
+                context_prefixes = generate_chunk_contexts(text_content, child_chunks)
+
+            # Prepend context to chunks for embedding and BM25 (CXRET-02)
+            chunks_for_embedding = []
+            for i, chunk in enumerate(child_chunks):
+                if context_prefixes[i]:
+                    chunks_for_embedding.append(f"{context_prefixes[i]}\n\n{chunk}")
+                else:
+                    chunks_for_embedding.append(chunk)
+
+            # Embed context-enriched chunks and store with parent metadata
+            embeddings = generate_embeddings(chunks_for_embedding)
             add_chunks(
-                doc_id, file.filename, child_chunks, embeddings,
+                doc_id, file.filename, chunks_for_embedding, embeddings,
                 parent_texts=parent_texts,
                 child_to_parent_index=child_to_parent_index,
+                context_prefixes=context_prefixes,
             )
-            # Build BM25 index on child chunks for keyword matching
+            # Build BM25 index on context-enriched chunks for keyword matching
             chunk_ids = [f"{doc_id}_chunk_{i}" for i in range(len(child_chunks))]
-            bm25_index_service.add_document(doc_id, child_chunks, chunk_ids)
+            bm25_index_service.add_document(doc_id, chunks_for_embedding, chunk_ids)
             indexing_status = "indexed"
         except Exception as e:
             # Log error but don't fail upload - graceful degradation
