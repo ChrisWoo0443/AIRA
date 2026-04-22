@@ -5,7 +5,7 @@ interface FileTypeBadgeProps {
 
 const TYPE_COLORS: Record<string, { bg: string; text: string }> = {
   pdf: { bg: 'rgba(239,68,68,0.12)', text: '#ef4444' },
-  md: { bg: 'rgba(129,140,248,0.12)', text: '#818cf8' },
+  md: { bg: 'rgba(163, 144, 112, 0.12)', text: '#a39070' },
   txt: { bg: 'rgba(235,235,245,0.08)', text: 'rgba(235,235,245,0.6)' },
 }
 

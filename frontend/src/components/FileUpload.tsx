@@ -165,7 +165,7 @@ export function FileUpload({ onUploadComplete }: FileUploadProps) {
             ? '2px solid var(--color-accent)'
             : '2px dashed var(--color-border)',
           borderRadius: 10,
-          background: isDragActive ? 'rgba(91,138,245,0.08)' : 'transparent',
+          background: isDragActive ? 'rgba(163, 144, 112, 0.08)' : 'transparent',
           transition: 'all 0.2s',
         }}
       >
