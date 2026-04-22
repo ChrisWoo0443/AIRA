@@ -48,7 +48,7 @@ export default function App() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '0 16px',
+        padding: '0 20px',
         marginBottom: 8,
       }}>
         <span style={{
@@ -61,7 +61,7 @@ export default function App() {
           Documents
         </span>
       </div>
-      <div style={{ padding: '0 16px' }}>
+      <div style={{ padding: '0 20px' }}>
         <FileUpload onUploadComplete={loadDocuments} />
         <DocumentList
           documents={documents}
