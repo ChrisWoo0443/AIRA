@@ -192,10 +192,11 @@ export default function Chat({ selectedModel, onModelChange, documents }: ChatPr
         onClick={toggleSidebar}
         aria-label="Toggle sidebar"
         style={{
-          position: 'absolute',
+          position: 'fixed',
           top: 12,
-          left: 12,
-          zIndex: 1,
+          left: isSidebarOpen ? 272 : 12,
+          zIndex: 60,
+          transition: 'left 200ms ease',
           width: 32,
           height: 32,
           display: 'flex',
