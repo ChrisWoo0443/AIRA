@@ -284,6 +284,7 @@ export function MessageList({
       style={{
         flex: 1,
         overflowY: 'auto',
+        scrollbarGutter: 'stable',
         padding: '16px 20px',
         display: 'flex',
         flexDirection: 'column',
