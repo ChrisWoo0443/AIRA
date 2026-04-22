@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useRef } from 'react'
+import { type ReactNode, useRef } from 'react'
 import { useSidebar } from '../../hooks/useDocumentPanel'
 
 interface SidebarProps {
@@ -9,34 +9,11 @@ interface SidebarProps {
 }
 
 export function Sidebar({ activeTab, onTabChange, chatListContent, documentContent }: SidebarProps) {
-  const { isOpen, close } = useSidebar()
+  const { isOpen } = useSidebar()
   const sidebarRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!isOpen) return
-    const handleClick = (e: MouseEvent) => {
-      if (sidebarRef.current && !sidebarRef.current.contains(e.target as Node)) {
-        close()
-      }
-    }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [isOpen, close])
 
   return (
     <>
-      {isOpen && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0, 0, 0, 0.3)',
-            zIndex: 'var(--z-overlay)',
-            transition: 'opacity 200ms ease',
-          }}
-        />
-      )}
-
       <aside
         ref={sidebarRef}
         style={{

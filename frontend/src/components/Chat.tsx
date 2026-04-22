@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from 'react'
+import { PanelLeft } from 'lucide-react'
 import type { ChatMessage } from '../types/chat'
 import type { Document } from '../types/document'
 import { ChatInput } from './ChatInput'
@@ -6,6 +7,7 @@ import { MessageList } from './MessageList'
 import { DocumentContextSelector } from './DocumentContextSelector'
 import ModelSelector from './ModelSelector'
 import { useChatSessions } from '../hooks/useChatSessions'
+import { useSidebar } from '../hooks/useDocumentPanel'
 import * as api from '../services/api'
 
 interface ChatProps {
@@ -16,6 +18,7 @@ interface ChatProps {
 
 export default function Chat({ selectedModel, onModelChange, documents }: ChatProps) {
   const { activeChat, updateMessages, updateTitle } = useChatSessions()
+  const { toggle: toggleSidebar, isOpen: isSidebarOpen } = useSidebar()
   const messages = activeChat?.messages || []
   const sessionId = activeChat?.backendSessionId || null
 
@@ -183,6 +186,38 @@ export default function Chat({ selectedModel, onModelChange, documents }: ChatPr
       background: 'var(--color-bg-primary)',
       position: 'relative',
     }}>
+      {/* Sidebar toggle button */}
+      <button
+        type="button"
+        onClick={toggleSidebar}
+        aria-label="Toggle sidebar"
+        style={{
+          position: 'absolute',
+          top: 12,
+          left: 12,
+          zIndex: 1,
+          width: 32,
+          height: 32,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'rgba(255,255,255,0.04)',
+          border: '1px solid rgba(255,255,255,0.06)',
+          borderRadius: 8,
+          cursor: 'pointer',
+          padding: 0,
+          transition: 'background 0.15s',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
+        }}
+      >
+        <PanelLeft size={16} style={{ color: 'var(--color-text-secondary)' }} />
+      </button>
+
       {/* Message list */}
       <MessageList
         messages={messages}
