@@ -22,6 +22,8 @@ export default function Chat({ selectedModel, onModelChange, documents }: ChatPr
   const [isLoading, setIsLoading] = useState(false)
   const [streamingContent, setStreamingContent] = useState('')
   const [selectedDocumentIds, setSelectedDocumentIds] = useState<Set<string>>(new Set())
+  const [showModelDropdown, setShowModelDropdown] = useState(false)
+  const [showDocDropdown, setShowDocDropdown] = useState(false)
 
   const streamingContentRef = useRef('')
 
@@ -115,11 +117,9 @@ export default function Chat({ selectedModel, onModelChange, documents }: ChatPr
     if (userMessageIndex < 0 || messages[userMessageIndex].role !== 'user') return
     const userContent = messages[userMessageIndex].content
 
-    // Truncate: keep everything up to but not including the AI message
     const truncated = messages.slice(0, messageIndex)
     updateMessages(truncated)
 
-    // Stream new response without adding a new user message
     setIsLoading(true)
     setStreamingContent('')
     streamingContentRef.current = ''
@@ -153,63 +153,8 @@ export default function Chat({ selectedModel, onModelChange, documents }: ChatPr
       height: '100%',
       overflow: 'hidden',
       background: 'var(--color-bg-primary)',
+      position: 'relative',
     }}>
-      {/* Header */}
-      <div style={{
-        borderBottom: '1px solid var(--color-border)',
-        padding: '10px 20px',
-        zIndex: 30,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-      }}>
-        {/* Left side */}
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <span style={{
-            color: 'var(--color-text-primary)',
-            fontSize: 14,
-            fontWeight: 600,
-          }}>AIRA</span>
-          <span style={{
-            color: 'var(--color-text-tertiary)',
-            fontSize: 11,
-            marginLeft: 8,
-          }}>AI Research Assistant</span>
-        </div>
-
-        {/* Right side */}
-        <div style={{
-          display: 'flex',
-          gap: 8,
-          alignItems: 'center',
-        }}>
-          {/* Model Selector */}
-          <ModelSelector onModelChange={onModelChange} />
-
-          {/* Document count badge + DocumentContextSelector */}
-          {documents.length > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-              <div style={{
-                background: 'rgba(34,197,94,0.15)',
-                color: '#22c55e',
-                borderRadius: 999,
-                padding: '3px 8px',
-                fontSize: 11,
-                fontWeight: 500,
-              }}>
-                {documents.length} docs
-              </div>
-              <DocumentContextSelector
-                documents={documents}
-                selectedIds={selectedDocumentIds}
-                onToggle={handleToggleDocument}
-                onToggleAll={handleToggleAllDocuments}
-              />
-            </div>
-          )}
-        </div>
-      </div>
-
       {/* Message list */}
       <MessageList
         messages={messages}
@@ -218,19 +163,68 @@ export default function Chat({ selectedModel, onModelChange, documents }: ChatPr
         onRetry={handleRetry}
       />
 
-      {/* Input area */}
+      {/* Input area with positioned dropdowns */}
       <div style={{
-        borderTop: '1px solid var(--color-border)',
         background: 'var(--color-bg-primary)',
+        position: 'relative',
       }}>
-        <div style={{ flex: 1 }}>
-          <ChatInput
-            onSubmit={handleSubmit}
-            disabled={isLoading}
-            documents={documents}
-            onDocumentMention={handleDocumentMention}
-          />
-        </div>
+        {/* Model selector dropdown */}
+        {showModelDropdown && (
+          <div style={{
+            position: 'absolute',
+            bottom: 80,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 'var(--z-dropdown)' as unknown as number,
+          }}>
+            <ModelSelector
+              onModelChange={(model) => {
+                onModelChange?.(model)
+                setShowModelDropdown(false)
+              }}
+              onClose={() => setShowModelDropdown(false)}
+              isOpen={showModelDropdown}
+            />
+          </div>
+        )}
+
+        {/* Document context selector dropdown */}
+        {showDocDropdown && (
+          <div style={{
+            position: 'absolute',
+            bottom: 80,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 'var(--z-dropdown)' as unknown as number,
+          }}>
+            <DocumentContextSelector
+              documents={documents}
+              selectedIds={selectedDocumentIds}
+              onToggle={handleToggleDocument}
+              onToggleAll={handleToggleAllDocuments}
+              onClose={() => setShowDocDropdown(false)}
+              isOpen={showDocDropdown}
+            />
+          </div>
+        )}
+
+        <ChatInput
+          onSubmit={handleSubmit}
+          disabled={isLoading}
+          documents={documents}
+          onDocumentMention={handleDocumentMention}
+          selectedModel={selectedModel || ''}
+          onModelClick={() => {
+            setShowModelDropdown(prev => !prev)
+            setShowDocDropdown(false)
+          }}
+          documentCount={documents.length}
+          selectedDocumentCount={selectedDocumentIds.size}
+          onDocumentContextClick={() => {
+            setShowDocDropdown(prev => !prev)
+            setShowModelDropdown(false)
+          }}
+        />
       </div>
     </div>
   )
