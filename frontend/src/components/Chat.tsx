@@ -146,6 +146,34 @@ export default function Chat({ selectedModel, onModelChange, documents }: ChatPr
     )
   }, [messages, sessionId, selectedModel, selectedDocumentIds, updateMessages])
 
+  const modelDropdownNode = (
+    <div style={{
+      visibility: showModelDropdown ? 'visible' : 'hidden',
+      opacity: showModelDropdown ? 1 : 0,
+      transition: 'opacity 0.15s ease',
+      pointerEvents: showModelDropdown ? 'auto' : 'none',
+    }}>
+      <ModelSelector
+        onModelChange={(model) => {
+          onModelChange?.(model)
+        }}
+        onClose={() => setShowModelDropdown(false)}
+        isOpen={showModelDropdown}
+      />
+    </div>
+  )
+
+  const docDropdownNode = showDocDropdown ? (
+    <DocumentContextSelector
+      documents={documents}
+      selectedIds={selectedDocumentIds}
+      onToggle={handleToggleDocument}
+      onToggleAll={handleToggleAllDocuments}
+      onClose={() => setShowDocDropdown(false)}
+      isOpen={showDocDropdown}
+    />
+  ) : null
+
   return (
     <div style={{
       display: 'flex',
@@ -163,69 +191,26 @@ export default function Chat({ selectedModel, onModelChange, documents }: ChatPr
         onRetry={handleRetry}
       />
 
-      {/* Input area with positioned dropdowns */}
-      <div style={{
-        background: 'var(--color-bg-primary)',
-        position: 'relative',
-      }}>
-        {/* Model selector dropdown */}
-        {showModelDropdown && (
-          <div style={{
-            position: 'absolute',
-            bottom: 80,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 'var(--z-dropdown)' as unknown as number,
-          }}>
-            <ModelSelector
-              onModelChange={(model) => {
-                onModelChange?.(model)
-                setShowModelDropdown(false)
-              }}
-              onClose={() => setShowModelDropdown(false)}
-              isOpen={showModelDropdown}
-            />
-          </div>
-        )}
-
-        {/* Document context selector dropdown */}
-        {showDocDropdown && (
-          <div style={{
-            position: 'absolute',
-            bottom: 80,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 'var(--z-dropdown)' as unknown as number,
-          }}>
-            <DocumentContextSelector
-              documents={documents}
-              selectedIds={selectedDocumentIds}
-              onToggle={handleToggleDocument}
-              onToggleAll={handleToggleAllDocuments}
-              onClose={() => setShowDocDropdown(false)}
-              isOpen={showDocDropdown}
-            />
-          </div>
-        )}
-
-        <ChatInput
-          onSubmit={handleSubmit}
-          disabled={isLoading}
-          documents={documents}
-          onDocumentMention={handleDocumentMention}
-          selectedModel={selectedModel || ''}
-          onModelClick={() => {
-            setShowModelDropdown(prev => !prev)
-            setShowDocDropdown(false)
-          }}
-          documentCount={documents.length}
-          selectedDocumentCount={selectedDocumentIds.size}
-          onDocumentContextClick={() => {
-            setShowDocDropdown(prev => !prev)
-            setShowModelDropdown(false)
-          }}
-        />
-      </div>
+      {/* Input area */}
+      <ChatInput
+        onSubmit={handleSubmit}
+        disabled={isLoading}
+        documents={documents}
+        onDocumentMention={handleDocumentMention}
+        selectedModel={selectedModel || ''}
+        onModelClick={() => {
+          setShowModelDropdown(prev => !prev)
+          setShowDocDropdown(false)
+        }}
+        documentCount={documents.length}
+        selectedDocumentCount={selectedDocumentIds.size}
+        onDocumentContextClick={() => {
+          setShowDocDropdown(prev => !prev)
+          setShowModelDropdown(false)
+        }}
+        modelDropdown={modelDropdownNode}
+        docDropdown={docDropdownNode}
+      />
     </div>
   )
 }

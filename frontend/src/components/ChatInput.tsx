@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, type ReactNode } from 'react';
 import type { FormEvent, KeyboardEvent, ChangeEvent } from 'react';
 import type { Document } from '../types/document';
 import { ArrowUp, Monitor, FileText } from 'lucide-react';
@@ -14,6 +14,8 @@ interface ChatInputProps {
   documentCount: number;
   selectedDocumentCount: number;
   onDocumentContextClick: () => void;
+  modelDropdown?: ReactNode;
+  docDropdown?: ReactNode;
 }
 
 export function ChatInput({
@@ -26,6 +28,8 @@ export function ChatInput({
   documentCount,
   selectedDocumentCount,
   onDocumentContextClick,
+  modelDropdown,
+  docDropdown,
 }: ChatInputProps) {
   const [input, setInput] = useState('');
   const [showAutocomplete, setShowAutocomplete] = useState(false);
@@ -34,6 +38,9 @@ export function ChatInput({
   const [selectedIndex, setSelectedIndex] = useState(0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const autocompleteRef = useRef<HTMLDivElement>(null);
+  const modelBtnRef = useRef<HTMLButtonElement>(null);
+  const docBtnRef = useRef<HTMLButtonElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
 
   const filteredDocuments = mentionQuery
     ? documents.filter(doc =>
@@ -171,13 +178,20 @@ export function ChatInput({
 
   const hasInput = input.trim().length > 0;
 
+  const getButtonLeft = (btnRef: React.RefObject<HTMLButtonElement | null>) => {
+    if (!btnRef.current || !wrapperRef.current) return 8;
+    const wrapperRect = wrapperRef.current.getBoundingClientRect();
+    const btnRect = btnRef.current.getBoundingClientRect();
+    return btnRect.left - wrapperRect.left;
+  };
+
   const documentLabel = selectedDocumentCount > 0
     ? `${selectedDocumentCount} doc${selectedDocumentCount !== 1 ? 's' : ''}`
     : `${documentCount} docs`;
 
   return (
     <div style={{ padding: '10px 20px 14px' }}>
-      <div style={{ position: 'relative', maxWidth: 720, margin: '0 auto' }}>
+      <div ref={wrapperRef} style={{ position: 'relative', maxWidth: 720, margin: '0 auto' }}>
         {/* Autocomplete dropdown */}
         {showAutocomplete && filteredDocuments.length > 0 && (
           <div
@@ -229,6 +243,30 @@ export function ChatInput({
                 </span>
               </button>
             ))}
+          </div>
+        )}
+
+        {/* Dropdowns rendered outside form to avoid overflow:hidden clipping */}
+        {modelDropdown && (
+          <div style={{
+            position: 'absolute',
+            bottom: '100%',
+            left: getButtonLeft(modelBtnRef),
+            marginBottom: 6,
+            zIndex: 30,
+          }}>
+            {modelDropdown}
+          </div>
+        )}
+        {docDropdown && (
+          <div style={{
+            position: 'absolute',
+            bottom: '100%',
+            left: getButtonLeft(docBtnRef),
+            marginBottom: 6,
+            zIndex: 30,
+          }}>
+            {docDropdown}
           </div>
         )}
 
@@ -304,6 +342,7 @@ export function ChatInput({
 
               {/* Model button */}
               <button
+                ref={modelBtnRef}
                 type="button"
                 onClick={onModelClick}
                 style={{
@@ -333,6 +372,7 @@ export function ChatInput({
 
               {/* Doc button */}
               <button
+                ref={docBtnRef}
                 type="button"
                 onClick={onDocumentContextClick}
                 style={{
@@ -362,6 +402,16 @@ export function ChatInput({
 
               {/* Spacer */}
               <div style={{ flex: 1 }} />
+
+              {/* Sidebar hint */}
+              <span style={{
+                fontSize: 11,
+                color: 'var(--color-text-tertiary)',
+                opacity: 0.5,
+                userSelect: 'none',
+              }}>
+                {navigator.platform?.toUpperCase().indexOf('MAC') >= 0 ? '\u2318' : 'Ctrl'}+B sidebar
+              </span>
 
               {/* Send button */}
               <button
