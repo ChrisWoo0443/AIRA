@@ -20,9 +20,9 @@ export default function FileTypeBadge({ filename, className }: FileTypeBadgeProp
     <div
       className={className}
       style={{
-        width: 24,
-        height: 24,
-        borderRadius: 5,
+        width: 20,
+        height: 20,
+        borderRadius: 4,
         background: colors.bg,
         color: colors.text,
         fontSize: 8,

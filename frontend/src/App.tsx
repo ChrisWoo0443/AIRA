@@ -5,7 +5,7 @@ import { DocumentList } from './components/DocumentList'
 import Chat from './components/Chat'
 import { ChatSessionsContext, useChatSessionsState } from './hooks/useChatSessions'
 import ChatList from './components/ChatList'
-import { fetchDocuments, deleteDocument, bulkDeleteDocuments } from './services/api'
+import { fetchDocuments, deleteDocument } from './services/api'
 import type { Document } from './types/document'
 
 export default function App() {
@@ -35,42 +35,19 @@ export default function App() {
     loadDocuments()
   }
 
-  const handleBulkDelete = async (ids: string[]) => {
-    await bulkDeleteDocuments(ids)
-    loadDocuments()
-  }
-
   const chatListContent = <ChatList />
 
   const documentContent = (
-    <>
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '0 20px',
-        marginBottom: 8,
-      }}>
-        <span style={{
-          fontSize: 10,
-          fontWeight: 600,
-          letterSpacing: '0.05em',
-          textTransform: 'uppercase',
-          color: 'var(--color-text-tertiary)',
-        }}>
-          Documents
-        </span>
-      </div>
-      <div style={{ padding: '0 20px' }}>
-        <FileUpload onUploadComplete={loadDocuments} />
+    <div style={{ padding: '0 20px' }}>
+      <FileUpload onUploadComplete={loadDocuments} />
+      <div style={{ marginTop: 8 }}>
         <DocumentList
           documents={documents}
           onDelete={handleDelete}
-          onBulkDelete={handleBulkDelete}
           loading={loading}
         />
       </div>
-    </>
+    </div>
   )
 
   return (

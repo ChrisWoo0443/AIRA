@@ -1,5 +1,4 @@
 import { useState, useRef } from 'react';
-import { Upload } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { uploadDocumentWithProgress } from '../services/api';
 
@@ -116,86 +115,61 @@ export function FileUpload({ onUploadComplete }: FileUploadProps) {
     noClick: true,
   });
 
-  const handleUploadButtonClick = () => {
+  const handleAddButtonClick = () => {
     inputRef.current?.click();
   };
 
   return (
-    <div>
-      {/* Upload button */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-        <button
-          onClick={handleUploadButtonClick}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            padding: '5px 12px',
-            fontSize: 12,
-            fontWeight: 500,
-            fontFamily: 'inherit',
-            background: 'var(--color-accent)',
-            color: '#fff',
-            border: 'none',
-            borderRadius: 6,
-            cursor: 'pointer',
-            transition: 'background 0.15s',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'var(--color-accent-hover)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'var(--color-accent)';
-          }}
-        >
-          <Upload size={14} />
-          Upload
-        </button>
-        <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)' }}>
-          PDF, TXT, MD &middot; max 10MB
-        </span>
-      </div>
+    <div {...getRootProps()}>
+      <input {...getInputProps()} ref={inputRef} id="file-upload" name="file-upload" />
 
-      {/* Drag-and-drop zone */}
-      <div
-        {...getRootProps()}
+      {/* Add documents button */}
+      <button
+        type="button"
+        onClick={handleAddButtonClick}
         style={{
-          position: 'relative',
-          border: isDragActive
-            ? '2px solid var(--color-accent)'
-            : '2px dashed var(--color-border)',
-          borderRadius: 10,
-          background: isDragActive ? 'rgba(163, 144, 112, 0.08)' : 'transparent',
-          transition: 'all 0.2s',
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 6,
+          padding: 8,
+          fontSize: 11,
+          fontFamily: 'inherit',
+          color: 'var(--color-text-secondary)',
+          background: isDragActive ? 'rgba(163, 144, 112, 0.08)' : 'rgba(255,255,255,0.03)',
+          border: isDragActive ? '1px dashed var(--color-accent)' : '1px dashed rgba(255,255,255,0.08)',
+          borderRadius: 8,
+          cursor: 'pointer',
+          transition: 'background 0.15s, border-color 0.15s',
+        }}
+        onMouseEnter={(e) => {
+          if (!isDragActive) {
+            e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!isDragActive) {
+            e.currentTarget.style.background = 'rgba(255,255,255,0.03)';
+          }
         }}
       >
-        <input {...getInputProps()} ref={inputRef} id="file-upload" name="file-upload" />
+        <span>+</span>
+        <span>Add documents</span>
+      </button>
 
-        <div style={{ padding: 12, minHeight: 60, display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {uploads.length === 0 && !isDragActive && (
-            <div style={{ textAlign: 'center', padding: '16px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-              <Upload size={20} style={{ color: 'var(--color-text-tertiary)' }} />
-              <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>
-                Drop files here
-              </span>
-            </div>
-          )}
-
-          {isDragActive && (
-            <div style={{ textAlign: 'center', padding: '16px 0', fontSize: 12, color: 'var(--color-accent)', fontWeight: 500 }}>
-              Drop files here
-            </div>
-          )}
-
+      {/* Upload progress items */}
+      {uploads.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 8 }}>
           {uploads.map((item) => (
             <div key={item.id} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               {item.status === 'error' ? (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 12, color: 'var(--color-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <div style={{ fontSize: 11, color: 'var(--color-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {item.file.name}
                     </div>
-                    <div style={{ fontSize: 11, color: 'var(--color-status-error)', marginTop: 2 }}>
+                    <div style={{ fontSize: 10, color: 'var(--color-status-error)', marginTop: 2 }}>
                       {item.errorMessage}
                     </div>
                   </div>
@@ -206,7 +180,7 @@ export function FileUpload({ onUploadComplete }: FileUploadProps) {
                       border: 'none',
                       padding: 0,
                       cursor: 'pointer',
-                      fontSize: 11,
+                      fontSize: 10,
                       color: 'var(--color-accent)',
                       fontFamily: 'inherit',
                       flexShrink: 0,
@@ -217,11 +191,11 @@ export function FileUpload({ onUploadComplete }: FileUploadProps) {
                 </div>
               ) : (
                 <div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 4 }}>
-                    <div style={{ fontSize: 12, color: 'var(--color-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 3 }}>
+                    <div style={{ fontSize: 11, color: 'var(--color-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>
                       {item.file.name}
                     </div>
-                    <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', flexShrink: 0 }}>
+                    <div style={{ fontSize: 10, color: 'var(--color-text-tertiary)', flexShrink: 0 }}>
                       {item.progress}%
                     </div>
                   </div>
@@ -248,7 +222,7 @@ export function FileUpload({ onUploadComplete }: FileUploadProps) {
             </div>
           ))}
         </div>
-      </div>
+      )}
     </div>
   );
 }
