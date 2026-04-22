@@ -1,6 +1,5 @@
 import { useRef, useEffect } from 'react';
 import type { Document } from '../types/document';
-import FileTypeBadge from './FileTypeBadge';
 
 interface DocumentContextSelectorProps {
   documents: Document[];
@@ -38,75 +37,25 @@ export function DocumentContextSelector({
   }, [isOpen, onClose]);
 
   const selectedCount = selectedIds.size;
-  const allSelected = selectedCount === 0;
+  const totalCount = documents.length;
+  const allSelected = selectedCount === totalCount && totalCount > 0;
 
   return (
     <div
       ref={dropdownRef}
       style={{
-        width: 256,
+        width: 220,
         background: 'var(--color-bg-elevated)',
-        border: '1px solid var(--color-border)',
-        borderRadius: 8,
+        border: '1px solid rgba(255,255,255,0.06)',
+        borderRadius: 10,
         boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
-        padding: 8,
+        overflow: 'hidden',
       }}
     >
-      {/* Section header */}
-      <div
-        style={{
-          fontSize: 10,
-          fontWeight: 600,
-          letterSpacing: '0.05em',
-          textTransform: 'uppercase',
-          color: 'var(--color-text-tertiary)',
-          padding: '4px 8px 8px',
-        }}
-      >
-        Document Context
-      </div>
-
-      {/* Toggle all button */}
-      <div style={{ paddingBottom: 8, marginBottom: 8, borderBottom: '1px solid var(--color-border)' }}>
-        <button
-          type="button"
-          onClick={onToggleAll}
-          style={{
-            width: '100%',
-            textAlign: 'left',
-            padding: '6px 8px',
-            fontSize: 12,
-            fontWeight: 500,
-            fontFamily: 'inherit',
-            color: 'var(--color-text-secondary)',
-            background: 'none',
-            border: 'none',
-            borderRadius: 6,
-            cursor: 'pointer',
-            transition: 'background 0.15s',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'var(--color-bg-hover)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'transparent';
-          }}
-        >
-          {allSelected ? 'Deselect All' : 'Select All'}
-        </button>
-      </div>
-
-      {/* All documents indicator */}
-      {allSelected && (
-        <div style={{ padding: '6px 8px', marginBottom: 8, fontSize: 11, color: 'var(--color-text-tertiary)', fontStyle: 'italic' }}>
-          All documents (default)
-        </div>
-      )}
-
       {/* Document list */}
-      <div style={{ maxHeight: 208, overflowY: 'auto' }}>
+      <div style={{ maxHeight: 240, overflowY: 'auto', padding: '6px 4px' }}>
         {documents.length === 0 ? (
-          <div style={{ padding: '12px 8px', fontSize: 11, color: 'var(--color-text-tertiary)', textAlign: 'center' }}>
+          <div style={{ padding: '16px 10px', fontSize: 11, color: 'var(--color-text-tertiary)', textAlign: 'center' }}>
             No documents uploaded
           </div>
         ) : (
@@ -114,41 +63,50 @@ export function DocumentContextSelector({
             const isSelected = selectedIds.has(doc.id);
 
             return (
-              <label
+              <button
                 key={doc.id}
+                type="button"
+                onClick={() => onToggle(doc.id)}
                 style={{
+                  width: '100%',
                   display: 'flex',
                   alignItems: 'center',
                   gap: 8,
-                  padding: '6px 8px',
+                  padding: '6px 10px',
                   borderRadius: 6,
                   cursor: 'pointer',
+                  border: 'none',
+                  fontFamily: 'inherit',
+                  textAlign: 'left',
+                  background: isSelected ? 'rgba(163, 144, 112, 0.06)' : 'transparent',
                   transition: 'background 0.15s',
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = 'var(--color-bg-hover)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'transparent';
+                  e.currentTarget.style.background = isSelected ? 'rgba(163, 144, 112, 0.06)' : 'transparent';
                 }}
               >
-                <input
-                  type="checkbox"
-                  checked={isSelected}
-                  onChange={() => onToggle(doc.id)}
+                {/* Dot indicator */}
+                <div
                   style={{
-                    width: 14,
-                    height: 14,
-                    cursor: 'pointer',
-                    accentColor: 'var(--color-accent)',
+                    width: 6,
+                    height: 6,
+                    borderRadius: '50%',
+                    flexShrink: 0,
+                    background: isSelected ? 'var(--color-accent)' : 'transparent',
+                    border: isSelected ? 'none' : '1px solid rgba(255,255,255,0.15)',
+                    boxSizing: 'border-box',
                   }}
                 />
-                <FileTypeBadge filename={doc.filename} />
+
+                {/* Filename */}
                 <span
                   style={{
                     flex: 1,
-                    fontSize: 12,
-                    color: 'var(--color-text-primary)',
+                    fontSize: 11,
+                    color: isSelected ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
                     whiteSpace: 'nowrap',
@@ -156,11 +114,43 @@ export function DocumentContextSelector({
                 >
                   {doc.filename}
                 </span>
-              </label>
+              </button>
             );
           })
         )}
       </div>
+
+      {/* Footer */}
+      {documents.length > 0 && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '6px 14px 8px',
+            borderTop: '1px solid rgba(255,255,255,0.04)',
+          }}
+        >
+          <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)' }}>
+            {allSelected ? 'All selected' : `${selectedCount} of ${totalCount} selected`}
+          </span>
+          <button
+            type="button"
+            onClick={onToggleAll}
+            style={{
+              background: 'none',
+              border: 'none',
+              padding: 0,
+              cursor: 'pointer',
+              fontSize: 10,
+              color: 'var(--color-accent)',
+              fontFamily: 'inherit',
+            }}
+          >
+            All
+          </button>
+        </div>
+      )}
     </div>
   );
 }
