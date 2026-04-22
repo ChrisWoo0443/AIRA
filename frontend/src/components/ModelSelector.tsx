@@ -8,6 +8,8 @@ interface ModelSelectorProps {
   isOpen: boolean
 }
 
+const MODEL_STORAGE_KEY = 'aira-selected-model'
+
 export default function ModelSelector({ onModelChange, onClose, isOpen }: ModelSelectorProps) {
   const [models, setModels] = useState<string[]>([])
   const [selectedModel, setSelectedModel] = useState<string>('')
@@ -23,14 +25,19 @@ export default function ModelSelector({ onModelChange, onClose, isOpen }: ModelS
         const availableModels = await listModels()
         setModels(availableModels)
 
-        const preferredModel =
+        const storedModel = localStorage.getItem(MODEL_STORAGE_KEY)
+        const restoredModel = storedModel && availableModels.includes(storedModel)
+          ? storedModel
+          : null
+
+        const initialModel = restoredModel ||
           availableModels.find(m => m.includes('llama3')) ||
           availableModels.find(m => m.includes('llama')) ||
           availableModels[0]
 
-        if (preferredModel) {
-          setSelectedModel(preferredModel)
-          onModelChange?.(preferredModel)
+        if (initialModel) {
+          setSelectedModel(initialModel)
+          onModelChange?.(initialModel)
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load models')
@@ -64,6 +71,7 @@ export default function ModelSelector({ onModelChange, onClose, isOpen }: ModelS
       setError(null)
       await selectModel(modelName)
       setSelectedModel(modelName)
+      localStorage.setItem(MODEL_STORAGE_KEY, modelName)
       onModelChange?.(modelName)
       onClose()
     } catch (err) {
