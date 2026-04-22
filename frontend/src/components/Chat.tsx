@@ -185,6 +185,8 @@ export default function Chat({ selectedModel, onModelChange, documents }: ChatPr
       overflow: 'hidden',
       background: 'var(--color-bg-primary)',
       position: 'relative',
+      paddingLeft: isSidebarOpen ? 260 : 0,
+      transition: 'padding-left 200ms ease',
     }}>
       {/* Sidebar toggle button */}
       <button
