@@ -13,47 +13,44 @@ describe('ModelSelector', () => {
   })
 
   it('renders loading state initially', () => {
-    render(<ModelSelector />)
-    expect(screen.getByText('Loading...')).toBeInTheDocument()
+    render(<ModelSelector onClose={vi.fn()} isOpen={true} />)
+    expect(screen.getByText('Loading models...')).toBeInTheDocument()
   })
 
-  it('renders model name in pill after loading', async () => {
-    render(<ModelSelector />)
+  it('renders model list after loading', async () => {
+    render(<ModelSelector onClose={vi.fn()} isOpen={true} />)
     await waitFor(() => {
-      expect(screen.getByRole('button')).toHaveTextContent('llama3')
+      expect(screen.getByText('llama3')).toBeInTheDocument()
     })
+    expect(screen.getByText('Model')).toBeInTheDocument()
   })
 
-  it('opens dropdown on pill click', async () => {
-    const user = userEvent.setup()
-    render(<ModelSelector />)
-    await waitFor(() => expect(screen.getByRole('button')).toHaveTextContent('llama3'))
-    await user.click(screen.getByRole('button'))
+  it('shows all available models in dropdown', async () => {
+    render(<ModelSelector onClose={vi.fn()} isOpen={true} />)
+    await waitFor(() => expect(screen.getByText('llama3')).toBeInTheDocument())
     expect(screen.getByText('gpt-4')).toBeVisible()
     expect(screen.getByText('mistral')).toBeVisible()
   })
 
-  it('selects model and closes dropdown', async () => {
+  it('selects model and calls onClose', async () => {
     const onModelChange = vi.fn()
+    const onClose = vi.fn()
     const user = userEvent.setup()
-    render(<ModelSelector onModelChange={onModelChange} />)
-    await waitFor(() => expect(screen.getByRole('button')).toHaveTextContent('llama3'))
-    await user.click(screen.getByRole('button'))
+    render(<ModelSelector onModelChange={onModelChange} onClose={onClose} isOpen={true} />)
+    await waitFor(() => expect(screen.getByText('llama3')).toBeInTheDocument())
     await user.click(screen.getByText('gpt-4'))
     await waitFor(() => {
       expect(mockedApi.selectModel).toHaveBeenCalledWith('gpt-4')
     })
+    expect(onClose).toHaveBeenCalled()
   })
 
   it('closes dropdown on outside click', async () => {
+    const onClose = vi.fn()
     const user = userEvent.setup()
-    render(<div><ModelSelector /><div data-testid="outside">outside</div></div>)
-    await waitFor(() => expect(screen.getByRole('button')).toHaveTextContent('llama3'))
-    await user.click(screen.getByRole('button'))
-    expect(screen.getByText('gpt-4')).toBeVisible()
+    render(<div><ModelSelector onClose={onClose} isOpen={true} /><div data-testid="outside">outside</div></div>)
+    await waitFor(() => expect(screen.getByText('llama3')).toBeInTheDocument())
     await user.click(screen.getByTestId('outside'))
-    await waitFor(() => {
-      expect(screen.queryByText('gpt-4')).not.toBeVisible()
-    })
+    expect(onClose).toHaveBeenCalled()
   })
 })

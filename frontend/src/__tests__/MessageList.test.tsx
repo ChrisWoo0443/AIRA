@@ -26,14 +26,19 @@ describe('MessageList', () => {
     expect(screen.getByText('Hi there!')).toBeInTheDocument()
   })
 
-  it('shows AIRA label for assistant messages', () => {
+  it('right-aligns user messages', () => {
     render(<MessageList messages={messages} streamingContent="" isLoading={false} />)
-    expect(screen.getByText('AIRA')).toBeInTheDocument()
+    const userMsg = screen.getByText('Hello')
+    const wrapper = userMsg.parentElement!
+    expect(wrapper.style.justifyContent).toBe('flex-end')
   })
 
-  it('shows You label for user messages', () => {
+  it('left-aligns assistant messages', () => {
     render(<MessageList messages={messages} streamingContent="" isLoading={false} />)
-    expect(screen.getByText('You')).toBeInTheDocument()
+    const assistantMsg = screen.getByText('Hi there!')
+    const bubble = assistantMsg.closest('p')!.parentElement!.parentElement!
+    const wrapper = bubble.parentElement!
+    expect(wrapper.style.justifyContent).toBe('flex-start')
   })
 
   it('shows streaming content with Thinking fallback', () => {
@@ -41,12 +46,12 @@ describe('MessageList', () => {
     expect(screen.getByText('Thinking...')).toBeInTheDocument()
   })
 
-  it('copies message content to clipboard', async () => {
+  it('copies assistant message content to clipboard', async () => {
     render(<MessageList messages={messages} streamingContent="" isLoading={false} />)
-    const copyButtons = screen.getAllByTitle('Copy')
-    fireEvent.click(copyButtons[0])
+    const copyButton = screen.getByTitle('Copy')
+    fireEvent.click(copyButton)
     await waitFor(() => {
-      expect(writeTextMock).toHaveBeenCalledWith('Hello')
+      expect(writeTextMock).toHaveBeenCalledWith('Hi there!')
     })
   })
 

@@ -20,36 +20,37 @@ describe('useDocumentPanelState', () => {
     mockMatchMedia(false)
   })
 
-  it('defaults to open', () => {
+  it('defaults to closed', () => {
     const { result } = renderHook(() => useDocumentPanelState())
-    expect(result.current.isOpen).toBe(true)
+    expect(result.current.isOpen).toBe(false)
   })
 
   it('toggles open/closed', () => {
     const { result } = renderHook(() => useDocumentPanelState())
     act(() => result.current.toggle())
-    expect(result.current.isOpen).toBe(false)
-    act(() => result.current.toggle())
     expect(result.current.isOpen).toBe(true)
+    act(() => result.current.toggle())
+    expect(result.current.isOpen).toBe(false)
   })
 
   it('close sets isOpen to false', () => {
     const { result } = renderHook(() => useDocumentPanelState())
+    act(() => result.current.toggle())
     expect(result.current.isOpen).toBe(true)
     act(() => result.current.close())
     expect(result.current.isOpen).toBe(false)
   })
 
-  it('persists isOpen to localStorage', () => {
+  it('persists activeTab to localStorage', () => {
     const { result } = renderHook(() => useDocumentPanelState())
-    act(() => result.current.toggle())
-    expect(JSON.parse(localStorage.getItem('aira-document-panel-open') || 'true')).toBe(false)
+    act(() => result.current.setActiveTab('documents'))
+    expect(localStorage.getItem('aira-sidebar-tab')).toBe('documents')
   })
 
-  it('reads persisted state on mount', () => {
-    localStorage.setItem('aira-document-panel-open', 'false')
+  it('reads persisted activeTab on mount', () => {
+    localStorage.setItem('aira-sidebar-tab', 'documents')
     const { result } = renderHook(() => useDocumentPanelState())
-    expect(result.current.isOpen).toBe(false)
+    expect(result.current.activeTab).toBe('documents')
   })
 
   it('isMobile reflects matchMedia', () => {
