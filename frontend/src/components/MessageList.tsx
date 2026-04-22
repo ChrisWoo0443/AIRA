@@ -13,13 +13,6 @@ interface MessageListProps {
   onRetry?: (messageIndex: number) => void
 }
 
-function formatTime(timestamp: string): string {
-  return new Date(timestamp).toLocaleTimeString([], {
-    hour: 'numeric',
-    minute: '2-digit',
-  })
-}
-
 function CopyButton({ content }: { content: string }) {
   const [copied, setCopied] = useState(false)
 
@@ -294,252 +287,160 @@ export function MessageList({
         padding: '16px 20px',
         display: 'flex',
         flexDirection: 'column',
-        gap: 16,
       }}
     >
       <style>{hoverStyleTag}</style>
 
-      {isEmpty && (
-        <div
-          style={{
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 8,
-          }}
-        >
-          <span
-            style={{
-              color: 'var(--color-text-tertiary)',
-              fontSize: 14,
-            }}
-          >
-            Start a conversation
-          </span>
-          <span
-            style={{
-              color: 'var(--color-text-secondary)',
-              fontSize: 11,
-            }}
-          >
-            Upload documents and ask questions about them
-          </span>
-        </div>
-      )}
-
-      {messages.map((message, index) => {
-        const isUser = message.role === 'user'
-        const isAssistant = message.role === 'assistant'
-        const isLastAssistant = index === lastAssistantIndex
-
-        return (
+      <div style={{ maxWidth: 720, margin: '0 auto', width: '100%', flex: 1, display: 'flex', flexDirection: 'column' }}>
+        {isEmpty && (
           <div
-            key={index}
-            className="message-wrapper"
             style={{
+              flex: 1,
               display: 'flex',
               flexDirection: 'column',
-              alignItems: isUser ? 'flex-end' : 'flex-start',
-              position: 'relative',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
             }}
           >
-            {/* Header: avatar + label + timestamp */}
-            <div
+            <span
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                marginBottom: 4,
+                color: 'var(--color-text-secondary)',
+                fontSize: 15,
               }}
             >
-              {isAssistant && (
+              Start a conversation
+            </span>
+            <span
+              style={{
+                color: 'var(--color-text-tertiary)',
+                fontSize: 12,
+              }}
+            >
+              Upload documents and ask questions about them
+            </span>
+          </div>
+        )}
+
+        {messages.map((message, index) => {
+          const isUser = message.role === 'user'
+          const isAssistant = message.role === 'assistant'
+          const isLastAssistant = index === lastAssistantIndex
+          const showDivider = isUser && index > 0
+
+          return (
+            <div key={index}>
+              {showDivider && (
                 <div
                   style={{
-                    width: 22,
-                    height: 22,
-                    borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #5b8af5, #a78bfa)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
+                    borderTop: '1px solid rgba(255, 255, 255, 0.04)',
+                    margin: '12px 0',
                   }}
-                >
-                  <span
-                    style={{
-                      color: 'white',
-                      fontSize: 9,
-                      fontWeight: 700,
-                      lineHeight: 1,
-                    }}
-                  >
-                    A
-                  </span>
-                </div>
+                />
               )}
-              <span
-                style={{
-                  fontSize: 11,
-                  fontWeight: 500,
-                  color: isUser
-                    ? 'var(--color-accent)'
-                    : 'var(--color-text-secondary)',
-                }}
-              >
-                {isUser ? 'You' : 'AIRA'}
-              </span>
-              <span
-                style={{
-                  fontSize: 10,
-                  color: 'var(--color-text-tertiary)',
-                }}
-              >
-                {formatTime(message.timestamp)}
-              </span>
-            </div>
 
-            {/* Message body */}
-            <div style={{ position: 'relative', maxWidth: '80%' }}>
               <div
-                style={
-                  isUser
-                    ? {
-                        background: 'linear-gradient(135deg, #5b8af5, #4a7ae8)',
-                        borderRadius: '12px 4px 12px 12px',
-                        color: 'white',
-                        fontSize: 13,
-                        lineHeight: 1.6,
-                        padding: '10px 14px',
-                        whiteSpace: 'pre-wrap' as const,
-                        wordBreak: 'break-word' as const,
-                        marginLeft: 'auto',
-                      }
-                    : {
-                        background: 'var(--color-bg-secondary)',
-                        border: '1px solid var(--color-border-rail)',
-                        borderRadius: '4px 12px 12px 12px',
-                        color: 'var(--color-text-primary)',
-                        fontSize: 13,
-                        lineHeight: 1.6,
-                        padding: '10px 14px',
-                        wordBreak: 'break-word' as const,
-                      }
-                }
+                className={isAssistant ? 'message-wrapper' : undefined}
+                style={{
+                  display: 'flex',
+                  justifyContent: isUser ? 'flex-end' : 'flex-start',
+                  marginBottom: 8,
+                }}
               >
                 {isUser ? (
-                  message.content
-                ) : (
-                  <ReactMarkdown
-                    remarkPlugins={[remarkGfm]}
-                    components={markdownComponents}
+                  <div
+                    style={{
+                      maxWidth: '80%',
+                      color: 'var(--color-text-primary)',
+                      fontSize: 14,
+                      lineHeight: 1.6,
+                      whiteSpace: 'pre-wrap' as const,
+                      wordBreak: 'break-word' as const,
+                    }}
                   >
                     {message.content}
-                  </ReactMarkdown>
+                  </div>
+                ) : (
+                  <div style={{ position: 'relative', maxWidth: '85%' }}>
+                    <div
+                      style={{
+                        background: 'rgba(255, 255, 255, 0.02)',
+                        borderRadius: 8,
+                        padding: '10px 14px',
+                        color: '#c8c4bc',
+                        fontSize: 14,
+                        lineHeight: 1.6,
+                        wordBreak: 'break-word' as const,
+                      }}
+                    >
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        components={markdownComponents}
+                      >
+                        {message.content}
+                      </ReactMarkdown>
+                    </div>
+
+                    <MessageActions
+                      content={message.content}
+                      showRetry={isLastAssistant}
+                      onRetry={
+                        isLastAssistant && onRetry
+                          ? () => onRetry(index)
+                          : undefined
+                      }
+                    />
+                  </div>
                 )}
               </div>
-
-              <MessageActions
-                content={message.content}
-                showRetry={isLastAssistant}
-                onRetry={
-                  isLastAssistant && onRetry
-                    ? () => onRetry(index)
-                    : undefined
-                }
-              />
             </div>
-          </div>
-        )
-      })}
+          )
+        })}
 
-      {isLoading && (
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'flex-start',
-          }}
-        >
+        {isLoading && (
           <div
             style={{
               display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              marginBottom: 4,
+              justifyContent: 'flex-start',
+              marginBottom: 8,
             }}
           >
             <div
               style={{
-                width: 22,
-                height: 22,
-                borderRadius: '50%',
-                background: 'linear-gradient(135deg, #5b8af5, #a78bfa)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
+                maxWidth: '85%',
+                background: 'rgba(255, 255, 255, 0.02)',
+                borderRadius: 8,
+                padding: '10px 14px',
+                color: '#c8c4bc',
+                fontSize: 14,
+                lineHeight: 1.6,
+                wordBreak: 'break-word' as const,
               }}
             >
-              <span
-                style={{
-                  color: 'white',
-                  fontSize: 9,
-                  fontWeight: 700,
-                  lineHeight: 1,
-                }}
-              >
-                A
-              </span>
+              {streamingContent ? (
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={markdownComponents}
+                >
+                  {streamingContent}
+                </ReactMarkdown>
+              ) : (
+                <span
+                  style={{
+                    fontStyle: 'italic',
+                    color: 'var(--color-text-tertiary)',
+                    animation: 'pulse-thinking 1.5s ease-in-out infinite',
+                  }}
+                >
+                  Thinking...
+                </span>
+              )}
             </div>
-            <span
-              style={{
-                fontSize: 11,
-                fontWeight: 500,
-                color: 'var(--color-text-secondary)',
-              }}
-            >
-              AIRA
-            </span>
           </div>
+        )}
 
-          <div
-            style={{
-              maxWidth: '80%',
-              background: 'var(--color-bg-secondary)',
-              border: '1px solid var(--color-border-rail)',
-              borderRadius: '4px 12px 12px 12px',
-              padding: '10px 14px',
-              fontSize: 13,
-              lineHeight: 1.6,
-              wordBreak: 'break-word' as const,
-              color: 'var(--color-text-primary)',
-            }}
-          >
-            {streamingContent ? (
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                components={markdownComponents}
-              >
-                {streamingContent}
-              </ReactMarkdown>
-            ) : (
-              <span
-                style={{
-                  fontStyle: 'italic',
-                  color: 'var(--color-text-tertiary)',
-                  animation: 'pulse-thinking 1.5s ease-in-out infinite',
-                }}
-              >
-                Thinking...
-              </span>
-            )}
-          </div>
-        </div>
-      )}
-
-      <div ref={bottomRef} />
+        <div ref={bottomRef} />
+      </div>
     </div>
   )
 }
