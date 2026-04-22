@@ -1,7 +1,6 @@
 import { type ReactNode } from 'react'
-import { DocumentPanelContext, useDocumentPanelState } from '../../hooks/useDocumentPanel'
-import { IconRail } from './IconRail'
-import { DocumentPanel } from './DocumentPanel'
+import { SidebarContext, useSidebarState } from '../../hooks/useDocumentPanel'
+import { Sidebar } from './DocumentPanel'
 
 interface LayoutProps {
   chatListContent: ReactNode
@@ -10,24 +9,25 @@ interface LayoutProps {
 }
 
 export function Layout({ chatListContent, documentContent, children }: LayoutProps) {
-  const documentPanelState = useDocumentPanelState()
-
-  const panelContent = documentPanelState.activePanel === 'chats'
-    ? chatListContent
-    : documentContent
+  const sidebarState = useSidebarState()
 
   return (
-    <DocumentPanelContext.Provider value={documentPanelState}>
+    <SidebarContext.Provider value={sidebarState}>
       <div
         style={{
-          display: 'flex',
           height: '100vh',
           width: '100vw',
           background: 'var(--color-bg-primary)',
+          display: 'flex',
+          flexDirection: 'column',
         }}
       >
-        <IconRail />
-        <DocumentPanel>{panelContent}</DocumentPanel>
+        <Sidebar
+          activeTab={sidebarState.activeTab}
+          onTabChange={sidebarState.setActiveTab}
+          chatListContent={chatListContent}
+          documentContent={documentContent}
+        />
         <main
           style={{
             flex: 1,
@@ -40,6 +40,6 @@ export function Layout({ chatListContent, documentContent, children }: LayoutPro
           {children}
         </main>
       </div>
-    </DocumentPanelContext.Provider>
+    </SidebarContext.Provider>
   )
 }
