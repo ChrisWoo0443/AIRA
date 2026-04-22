@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import type { FormEvent, KeyboardEvent, ChangeEvent } from 'react';
 import type { Document } from '../types/document';
-import { ArrowUp } from 'lucide-react';
+import { ArrowUp, Monitor, FileText } from 'lucide-react';
 import FileTypeBadge from './FileTypeBadge';
 
 interface ChatInputProps {
@@ -9,9 +9,24 @@ interface ChatInputProps {
   disabled: boolean;
   documents?: Document[];
   onDocumentMention?: (id: string) => void;
+  selectedModel: string;
+  onModelClick: () => void;
+  documentCount: number;
+  selectedDocumentCount: number;
+  onDocumentContextClick: () => void;
 }
 
-export function ChatInput({ onSubmit, disabled, documents = [], onDocumentMention }: ChatInputProps) {
+export function ChatInput({
+  onSubmit,
+  disabled,
+  documents = [],
+  onDocumentMention,
+  selectedModel,
+  onModelClick,
+  documentCount,
+  selectedDocumentCount,
+  onDocumentContextClick,
+}: ChatInputProps) {
   const [input, setInput] = useState('');
   const [showAutocomplete, setShowAutocomplete] = useState(false);
   const [mentionQuery, setMentionQuery] = useState('');
@@ -105,7 +120,6 @@ export function ChatInput({ onSubmit, disabled, documents = [], onDocumentMentio
     }
 
     if (e.key === 'Enter' && e.shiftKey) {
-      // Allow default behavior (newline insertion)
       return;
     }
 
@@ -155,9 +169,15 @@ export function ChatInput({ onSubmit, disabled, documents = [], onDocumentMentio
     };
   }, [showAutocomplete]);
 
+  const hasInput = input.trim().length > 0;
+
+  const documentLabel = selectedDocumentCount > 0
+    ? `${selectedDocumentCount} doc${selectedDocumentCount !== 1 ? 's' : ''}`
+    : `${documentCount} docs`;
+
   return (
     <div style={{ padding: '10px 20px 14px' }}>
-      <div style={{ position: 'relative', width: '100%' }}>
+      <div style={{ position: 'relative', maxWidth: 720, margin: '0 auto' }}>
         {/* Autocomplete dropdown */}
         {showAutocomplete && filteredDocuments.length > 0 && (
           <div
@@ -193,7 +213,7 @@ export function ChatInput({ onSubmit, disabled, documents = [], onDocumentMentio
                   border: 'none',
                   cursor: 'pointer',
                   background: index === selectedIndex
-                    ? 'rgba(91,138,245,0.1)'
+                    ? 'rgba(163, 144, 112, 0.1)'
                     : 'transparent',
                   borderLeft: index === selectedIndex
                     ? '2px solid var(--color-accent)'
@@ -216,63 +236,158 @@ export function ChatInput({ onSubmit, disabled, documents = [], onDocumentMentio
         <form onSubmit={handleSubmit}>
           <div
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
               background: 'var(--color-bg-secondary)',
               border: '1px solid var(--color-border-strong)',
-              borderRadius: 'var(--radius-input, 14px)',
-              padding: '8px 8px 8px 14px',
-              transition: 'border-color 0.15s ease',
+              borderRadius: 'var(--radius-input, 16px)',
+              overflow: 'hidden',
             }}
           >
-            <textarea
-              ref={textareaRef}
-              id="chat-input"
-              name="chat-input"
-              value={input}
-              onChange={handleInputChange}
-              onKeyDown={handleKeyDown}
-              placeholder="Message AIRA... (use @ to reference documents)"
-              disabled={disabled}
-              rows={1}
+            {/* Top row: textarea */}
+            <div style={{ padding: '10px 14px 4px' }}>
+              <textarea
+                ref={textareaRef}
+                id="chat-input"
+                name="chat-input"
+                value={input}
+                onChange={handleInputChange}
+                onKeyDown={handleKeyDown}
+                placeholder="Message AIRA..."
+                disabled={disabled}
+                rows={1}
+                style={{
+                  width: '100%',
+                  background: 'transparent',
+                  border: 'none',
+                  outline: 'none',
+                  color: 'var(--color-text-primary)',
+                  fontSize: 14,
+                  lineHeight: 1.5,
+                  resize: 'none',
+                  maxHeight: 200,
+                  fontFamily: 'var(--font-family)',
+                  padding: 0,
+                  margin: 0,
+                }}
+              />
+            </div>
+
+            {/* Bottom row: controls */}
+            <div
               style={{
-                flex: 1,
-                background: 'transparent',
-                border: 'none',
-                outline: 'none',
-                color: 'var(--color-text-primary)',
-                fontSize: 13,
-                lineHeight: 1.5,
-                resize: 'none',
-                maxHeight: 200,
-                fontFamily: 'var(--font-family)',
-                padding: '2px 0',
-                margin: 0,
+                display: 'flex',
+                alignItems: 'center',
+                padding: '4px 8px 8px',
+                gap: 6,
               }}
-            />
-          <button
-            type="submit"
-            disabled={disabled || !input.trim()}
-            style={{
-              width: 30,
-              height: 30,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: 'var(--color-accent)',
-              border: 'none',
-              borderRadius: 8,
-              cursor: disabled || !input.trim() ? 'not-allowed' : 'pointer',
-              opacity: disabled || !input.trim() ? 0.5 : 1,
-              padding: 0,
-              flexShrink: 0,
-              transition: 'opacity 0.15s ease, background 0.15s ease',
-            }}
-            aria-label="Send message"
-          >
-            <ArrowUp size={14} color="white" strokeWidth={2.5} />
-          </button>
+            >
+              {/* @ hint */}
+              <span
+                style={{
+                  fontSize: 12,
+                  color: 'var(--color-text-tertiary)',
+                  padding: '0 6px',
+                  userSelect: 'none',
+                }}
+              >
+                @ to mention
+              </span>
+
+              {/* Vertical divider */}
+              <div
+                style={{
+                  width: 1,
+                  height: 16,
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  flexShrink: 0,
+                }}
+              />
+
+              {/* Model button */}
+              <button
+                type="button"
+                onClick={onModelClick}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  fontSize: 12,
+                  color: 'var(--color-text-secondary)',
+                  background: 'rgba(255, 255, 255, 0.03)',
+                  border: 'none',
+                  borderRadius: 6,
+                  padding: '4px 8px',
+                  cursor: 'pointer',
+                  fontFamily: 'var(--font-family)',
+                  transition: 'background 0.15s',
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.background = 'var(--color-bg-hover)';
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)';
+                }}
+              >
+                <Monitor size={13} />
+                <span>{selectedModel || 'Model'}</span>
+              </button>
+
+              {/* Doc button */}
+              <button
+                type="button"
+                onClick={onDocumentContextClick}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  fontSize: 12,
+                  color: 'var(--color-text-secondary)',
+                  background: 'rgba(255, 255, 255, 0.03)',
+                  border: 'none',
+                  borderRadius: 6,
+                  padding: '4px 8px',
+                  cursor: 'pointer',
+                  fontFamily: 'var(--font-family)',
+                  transition: 'background 0.15s',
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.background = 'var(--color-bg-hover)';
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)';
+                }}
+              >
+                <FileText size={13} />
+                <span>{documentLabel}</span>
+              </button>
+
+              {/* Spacer */}
+              <div style={{ flex: 1 }} />
+
+              {/* Send button */}
+              <button
+                type="submit"
+                disabled={disabled || !hasInput}
+                style={{
+                  width: 28,
+                  height: 28,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: '#a39070',
+                  border: 'none',
+                  borderRadius: 8,
+                  cursor: hasInput && !disabled ? 'pointer' : 'default',
+                  opacity: hasInput ? 1 : 0,
+                  pointerEvents: hasInput ? 'auto' : 'none',
+                  padding: 0,
+                  flexShrink: 0,
+                  transition: 'opacity 0.15s ease',
+                }}
+                aria-label="Send message"
+              >
+                <ArrowUp size={14} color="#1e1d1b" strokeWidth={2.5} />
+              </button>
+            </div>
           </div>
         </form>
       </div>
