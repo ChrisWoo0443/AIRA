@@ -13,44 +13,27 @@ export default function ChatList() {
   }
 
   return (
-    <div style={{ padding: '0 16px' }}>
-      {/* Header */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginBottom: 8,
-      }}>
-        <span style={{
-          fontSize: 10,
-          fontWeight: 600,
-          letterSpacing: '0.05em',
-          textTransform: 'uppercase',
-          color: 'var(--color-text-tertiary)',
-        }}>
-          Chats
-        </span>
-        <button
-          type="button"
-          onClick={() => createChat()}
-          style={{
-            fontSize: 10,
-            fontWeight: 500,
-            color: 'var(--color-accent)',
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: 0,
-          }}
-        >
-          + New
-        </button>
-      </div>
+    <div style={{ padding: '0 12px' }}>
+      {/* New chat button */}
+      <button
+        type="button"
+        onClick={() => createChat()}
+        style={{
+          fontSize: 12,
+          fontWeight: 500,
+          color: 'var(--color-accent)',
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          padding: '0 0 8px 0',
+          fontFamily: 'inherit',
+        }}
+      >
+        + New chat
+      </button>
 
       {/* Chat list */}
       <div style={{
-        maxHeight: 200,
-        overflowY: 'auto',
         display: 'flex',
         flexDirection: 'column',
         gap: 2,
@@ -66,8 +49,7 @@ export default function ChatList() {
                 padding: '8px 10px',
                 borderRadius: 6,
                 cursor: 'pointer',
-                background: isActive ? 'var(--color-bg-elevated)' : 'transparent',
-                border: isActive ? '1px solid var(--color-border-strong)' : '1px solid transparent',
+                background: isActive ? 'rgba(255, 255, 255, 0.04)' : 'transparent',
                 transition: 'background 120ms ease',
                 display: 'flex',
                 alignItems: 'center',
@@ -77,9 +59,9 @@ export default function ChatList() {
             >
               <div style={{ minWidth: 0, flex: 1 }}>
                 <div style={{
-                  fontSize: 11,
-                  fontWeight: 500,
-                  color: 'var(--color-text-primary)',
+                  fontSize: 12,
+                  fontWeight: isActive ? 500 : 400,
+                  color: isActive ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
