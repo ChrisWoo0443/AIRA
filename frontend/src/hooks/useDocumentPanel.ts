@@ -1,41 +1,33 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 
-export type PanelSection = 'chats' | 'documents'
+export type SidebarTab = 'chats' | 'documents'
 
-interface DocumentPanelState {
+interface SidebarState {
   isOpen: boolean
   isMobile: boolean
-  activePanel: PanelSection
+  activeTab: SidebarTab
   toggle: () => void
   close: () => void
-  setActivePanel: (panel: PanelSection) => void
+  setActiveTab: (tab: SidebarTab) => void
 }
 
-const STORAGE_KEY = 'aira-document-panel-open'
-const PANEL_KEY = 'aira-active-panel'
+const TAB_KEY = 'aira-sidebar-tab'
 
-export const DocumentPanelContext = createContext<DocumentPanelState | null>(null)
+export const SidebarContext = createContext<SidebarState | null>(null)
 
-export function useDocumentPanelState(): DocumentPanelState {
-  const [isOpen, setIsOpen] = useState<boolean>(() => {
+export function useSidebarState(): SidebarState {
+  const [isOpen, setIsOpen] = useState(false)
+
+  const [activeTab, setActiveTabState] = useState<SidebarTab>(() => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY)
-      return stored !== null ? JSON.parse(stored) : true
-    } catch {
-      return true
-    }
-  })
-
-  const [activePanel, setActivePanelState] = useState<PanelSection>(() => {
-    try {
-      const stored = localStorage.getItem(PANEL_KEY)
+      const stored = localStorage.getItem(TAB_KEY)
       return (stored === 'chats' || stored === 'documents') ? stored : 'chats'
     } catch {
       return 'chats'
     }
   })
 
-  const [isMobile, setIsMobile] = useState<boolean>(false)
+  const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(max-width: 767px)')
@@ -47,31 +39,43 @@ export function useDocumentPanelState(): DocumentPanelState {
 
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(isOpen))
-    } catch { /* ignore quota errors */ }
-  }, [isOpen])
+      localStorage.setItem(TAB_KEY, activeTab)
+    } catch { /* ignore */ }
+  }, [activeTab])
 
   useEffect(() => {
-    try {
-      localStorage.setItem(PANEL_KEY, activePanel)
-    } catch { /* ignore */ }
-  }, [activePanel])
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'b') {
+        e.preventDefault()
+        setIsOpen(prev => !prev)
+      }
+      if (e.key === 'Escape') {
+        setIsOpen(false)
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [])
 
-  const toggle = useCallback(() => setIsOpen(previousValue => !previousValue), [])
+  const toggle = useCallback(() => setIsOpen(prev => !prev), [])
   const close = useCallback(() => setIsOpen(false), [])
 
-  const setActivePanel = useCallback((panel: PanelSection) => {
-    setActivePanelState(panel)
+  const setActiveTab = useCallback((tab: SidebarTab) => {
+    setActiveTabState(tab)
     setIsOpen(true)
   }, [])
 
-  return { isOpen, isMobile, activePanel, toggle, close, setActivePanel }
+  return { isOpen, isMobile, activeTab, toggle, close, setActiveTab }
 }
 
-export function useDocumentPanel(): DocumentPanelState {
-  const context = useContext(DocumentPanelContext)
+export function useSidebar(): SidebarState {
+  const context = useContext(SidebarContext)
   if (!context) {
-    throw new Error('useDocumentPanel must be used within a DocumentPanelProvider')
+    throw new Error('useSidebar must be used within a SidebarProvider')
   }
   return context
 }
+
+export const DocumentPanelContext = SidebarContext
+export const useDocumentPanelState = useSidebarState
+export const useDocumentPanel = useSidebar
